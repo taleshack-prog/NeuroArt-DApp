@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount } from 'wagmi'
-import { Brain, ArrowLeft, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import { Brain, ArrowLeft, Upload, CheckCircle, AlertCircle, DollarSign } from 'lucide-react'
 import Link from 'next/link'
+
+type Moeda = 'BRL' | 'USD' | 'ETH'
 
 type FormData = {
   artistName: string
@@ -14,15 +16,26 @@ type FormData = {
   neurotipo: string
   estadoCognitivo: string
   totalFractions: string
+  valorObra: string
+  moeda: Moeda
   imageFile: File | null
   imagePreview: string
+  imageBase64: string
 }
 
 const NEUROTIPOS = ['TDAH', 'TEA', 'Dislexia', 'Discalculia', 'Superdotação', 'Outro']
 const ESTADOS = ['Hiperfoco', 'Estado de Fluxo', 'Divergência Criativa', 'Monofoco', 'Expansão Cognitiva']
+const MOEDAS: { value: Moeda; label: string; symbol: string }[] = [
+  { value: 'BRL', label: 'Real Brasileiro', symbol: 'R$' },
+  { value: 'USD', label: 'Dólar Americano', symbol: 'US$' },
+  { value: 'ETH', label: 'Ethereum', symbol: 'ETH' },
+]
 
 export default function SubmitPage() {
   const { address, isConnected } = useAccount()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   const [step, setStep] = useState<'form' | 'success'>('form')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -34,9 +47,24 @@ export default function SubmitPage() {
     neurotipo: '',
     estadoCognitivo: '',
     totalFractions: '100000',
+    valorObra: '',
+    moeda: 'BRL',
     imageFile: null,
     imagePreview: '',
+    imageBase64: '',
   })
+
+  // Preço por fração calculado automaticamente
+  const precoPorFracao = () => {
+    const valor = parseFloat(form.valorObra)
+    const fracoes = parseInt(form.totalFractions)
+    if (!valor || !fracoes || fracoes === 0) return null
+    const preco = valor / fracoes
+    // preco correto: valor total dividido pelo numero de fracoes
+    const moeda = MOEDAS.find(m => m.value === form.moeda)
+    if (form.moeda === 'ETH') return `${preco.toFixed(6)} ETH`
+    return `${moeda?.symbol} ${preco.toFixed(4)}`
+  }
 
   function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -45,15 +73,13 @@ export default function SubmitPage() {
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Imagem muito grande. Máximo 10MB.')
-      return
-    }
+    if (file.size > 10 * 1024 * 1024) { setError('Imagem muito grande. Máximo 10MB.'); return }
     const reader = new FileReader()
     reader.onload = () => setForm(prev => ({
       ...prev,
       imageFile: file,
       imagePreview: reader.result as string,
+      imageBase64: reader.result as string,
     }))
     reader.readAsDataURL(file)
     setError('')
@@ -61,24 +87,53 @@ export default function SubmitPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!isConnected) { setError('Conecte sua carteira primeiro.'); return }
+    if (!mounted || !isConnected || !address) { setError('Conecte sua carteira primeiro.'); return }
     if (!form.imageFile) { setError('Selecione uma imagem da obra.'); return }
     if (!form.neurotipo) { setError('Selecione o neurotipo.'); return }
     if (!form.estadoCognitivo) { setError('Selecione o estado cognitivo.'); return }
-    if (Number(form.totalFractions) < 100) { setError('Mínimo de 100 frações.'); return }
+    if (!form.valorObra || parseFloat(form.valorObra) <= 0) { setError('Informe o valor da obra.'); return }
+    if (Number(form.totalFractions) < 1) { setError('Mínimo de 1 fração.'); return }
     if (Number(form.totalFractions) > 100_000_000) { setError('Máximo de 100.000.000 frações.'); return }
 
     setSubmitting(true)
     setError('')
 
-    // Simula envio — aqui será integrado com Pinata + backend
-    await new Promise(r => setTimeout(r, 2000))
+    try {
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          artistName: form.artistName,
+          artistWallet: address,
+          title: form.title,
+          description: form.description,
+          neurotipo: form.neurotipo,
+          estadoCognitivo: form.estadoCognitivo,
+          totalFractions: form.totalFractions,
+          valorObra: form.valorObra,
+          moeda: form.moeda,
+          precoPorFracao: precoPorFracao(),
+          imageBase64: form.imageBase64,
+        }),
+      })
 
-    setSubmitting(false)
-    setStep('success')
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Erro ao submeter obra.')
+        setSubmitting(false)
+        return
+      }
+
+      setStep('success')
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (step === 'success') {
+    const moeda = MOEDAS.find(m => m.value === form.moeda)
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white flex items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -88,21 +143,33 @@ export default function SubmitPage() {
           <p className="text-slate-400 mb-2">
             <span className="text-emerald-400 font-semibold">"{form.title}"</span> foi enviada para análise dos fundadores.
           </p>
-          <p className="text-slate-500 text-sm mb-6">
-            Você será notificado quando sua obra for aprovada e tokenizada na Base Sepolia.
-          </p>
-          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 mb-6 text-left">
-            <div className="text-xs text-slate-500 mb-1">Carteira do artista</div>
-            <div className="text-indigo-400 font-mono text-sm truncate">{address}</div>
-            <div className="text-xs text-slate-500 mt-2 mb-1">Frações solicitadas</div>
-            <div className="text-emerald-400 font-bold">{Number(form.totalFractions).toLocaleString()} frações</div>
+          <p className="text-slate-500 text-sm mb-6">Você será notificado quando sua obra for aprovada e tokenizada na Base Sepolia.</p>
+          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 mb-6 text-left space-y-3">
+            <div>
+              <div className="text-xs text-slate-500 mb-1">Carteira vinculada</div>
+              <div className="text-indigo-400 font-mono text-sm truncate">{address}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Valor da obra</div>
+                <div className="text-emerald-400 font-bold">{moeda?.symbol} {parseFloat(form.valorObra).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Frações</div>
+                <div className="text-indigo-400 font-bold">{Number(form.totalFractions).toLocaleString()}</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500 mb-1">Preço por fração</div>
+              <div className="text-purple-400 font-bold">{precoPorFracao()}</div>
+            </div>
           </div>
           <div className="flex gap-3">
             <Link href="/gallery"
               className="flex-1 px-4 py-3 bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 rounded-xl text-sm font-semibold text-center hover:bg-indigo-600/30 transition-all">
               Ver Galeria
             </Link>
-            <button onClick={() => { setStep('form'); setForm({ artistName: '', title: '', description: '', neurotipo: '', estadoCognitivo: '', totalFractions: '100000', imageFile: null, imagePreview: '' }) }}
+            <button onClick={() => setStep('form')}
               className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-sm font-semibold hover:border-slate-600 transition-all">
               Nova Submissão
             </button>
@@ -134,7 +201,7 @@ export default function SubmitPage() {
       <div className="max-w-3xl mx-auto px-6 py-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-black mb-2">Tokenize sua Obra</h1>
-          <p className="text-slate-400">Submeta sua obra para análise dos fundadores. Após aprovação, ela será tokenizada na Base Sepolia e disponibilizada para investidores.</p>
+          <p className="text-slate-400">Submeta sua obra para análise. Após aprovação pelos fundadores, ela será tokenizada na Base Sepolia.</p>
         </motion.div>
 
         {!isConnected && (
@@ -149,7 +216,7 @@ export default function SubmitPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Upload de imagem */}
+          {/* Imagem */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
             <h2 className="font-bold text-white mb-4 flex items-center gap-2">
@@ -169,32 +236,28 @@ export default function SubmitPage() {
             </label>
           </motion.div>
 
-          {/* Dados da obra */}
+          {/* Dados */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
             <h2 className="font-bold text-white mb-2">Dados da Obra</h2>
-
             <div>
               <label className="block text-slate-400 text-sm mb-1.5">Seu nome artístico *</label>
               <input name="artistName" value={form.artistName} onChange={handleInput} required
                 placeholder="Como você quer ser identificado"
                 className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors" />
             </div>
-
             <div>
               <label className="block text-slate-400 text-sm mb-1.5">Título da obra *</label>
               <input name="title" value={form.title} onChange={handleInput} required
                 placeholder="Ex: Neuro-Sinfonia #001"
                 className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors" />
             </div>
-
             <div>
               <label className="block text-slate-400 text-sm mb-1.5">Descrição *</label>
               <textarea name="description" value={form.description} onChange={handleInput} required rows={4}
-                placeholder="Descreva o processo criativo, o estado cognitivo durante a criação e o significado da obra..."
+                placeholder="Descreva o processo criativo, o estado cognitivo durante a criação..."
                 className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none" />
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-slate-400 text-sm mb-1.5">Neurotipo *</label>
@@ -215,31 +278,70 @@ export default function SubmitPage() {
             </div>
           </motion.div>
 
-          {/* Frações */}
+          {/* Precificação */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-            <h2 className="font-bold text-white mb-1">Quantidade de Frações</h2>
-            <p className="text-slate-500 text-sm mb-4">Você decide em quantas frações quer dividir sua obra. Mais frações = menor preço unitário = mais acessível.</p>
-            <input name="totalFractions" type="number" value={form.totalFractions} onChange={handleInput}
-              min="100" max="100000000" required
-              className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors font-mono text-lg" />
-            <div className="flex justify-between text-xs text-slate-600 mt-2">
-              <span>Mínimo: 100</span>
-              <span>Máximo: 100.000.000</span>
+            className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h2 className="font-bold text-white flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-emerald-400" /> Precificação da Obra
+            </h2>
+
+            {/* Valor e moeda */}
+            <div>
+              <label className="block text-slate-400 text-sm mb-1.5">Valor total da obra *</label>
+              <div className="flex gap-3">
+                <select name="moeda" value={form.moeda} onChange={handleInput}
+                  className="bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors shrink-0">
+                  {MOEDAS.map(m => <option key={m.value} value={m.value}>{m.symbol} {m.value}</option>)}
+                </select>
+                <input name="valorObra" type="number" value={form.valorObra} onChange={handleInput}
+                  required min="0.01" step="0.01"
+                  placeholder="Ex: 800.00"
+                  className="flex-1 bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors font-mono" />
+              </div>
+              <p className="text-slate-600 text-xs mt-1.5">Valor pelo qual você avalia sua obra. Os fundadores irão analisar se é compatível.</p>
             </div>
-            <div className="mt-3 flex gap-2 flex-wrap">
-              {[1000, 10000, 100000, 1000000].map(v => (
-                <button key={v} type="button"
-                  onClick={() => setForm(prev => ({ ...prev, totalFractions: String(v) }))}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                    form.totalFractions === String(v)
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-indigo-500'
-                  }`}>
-                  {v.toLocaleString()}
-                </button>
-              ))}
+
+            {/* Frações */}
+            <div>
+              <label className="block text-slate-400 text-sm mb-1.5">Quantidade de frações *</label>
+              <input name="totalFractions" type="number" value={form.totalFractions} onChange={handleInput}
+                min="1" max="100000000" required
+                className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors font-mono text-lg" />
+              <div className="flex justify-between text-xs text-slate-600 mt-1.5">
+                <span>Mínimo: 1 (obra inteira)</span>
+                <span>Máximo: 100.000.000</span>
+              </div>
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {[1, 1000, 10000, 100000, 1000000].map(v => (
+                  <button key={v} type="button"
+                    onClick={() => setForm(prev => ({ ...prev, totalFractions: String(v) }))}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      form.totalFractions === String(v)
+                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-indigo-500'
+                    }`}>
+                    {v === 1 ? '1 (único)' : v.toLocaleString()}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Preview do preço por fração */}
+            {precoPorFracao() && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-slate-500">Preço por fração calculado</div>
+                  <div className="text-emerald-400 font-black text-xl mt-0.5">{precoPorFracao()}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">Valor total</div>
+                  <div className="text-white font-bold">
+                    {MOEDAS.find(m => m.value === form.moeda)?.symbol} {parseFloat(form.valorObra || '0').toLocaleString()}
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
           {error && (
@@ -248,13 +350,12 @@ export default function SubmitPage() {
             </div>
           )}
 
-          <motion.button type="submit" disabled={submitting || !isConnected}
+          <motion.button type="submit" disabled={submitting || !mounted || !isConnected}
             whileHover={{ scale: submitting ? 1 : 1.02 }}
             whileTap={{ scale: submitting ? 1 : 0.98 }}
             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-black text-lg hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            {submitting ? 'Enviando...' : isConnected ? 'Submeter Obra para Aprovação' : 'Conecte a carteira para submeter'}
+            {submitting ? 'Enviando...' : (mounted && isConnected) ? 'Submeter Obra para Aprovação' : 'Conecte a carteira para submeter'}
           </motion.button>
-
         </form>
       </div>
 

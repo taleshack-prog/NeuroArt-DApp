@@ -14,6 +14,9 @@ export type ArtworkSubmission = {
   status: ArtworkStatus
   submittedAt: string
   approvedAt?: string
+  valorObra?: string
+  moeda?: string
+  precoPorFracao?: string
   vaultAddress?: string
   txHash?: string
 }

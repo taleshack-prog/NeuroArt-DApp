@@ -1,0 +1,21 @@
+[
+  {
+    "id": "1777841548376",
+    "artistName": "Tales Hack",
+    "artistWallet": "0xE9eFC721405e1026B1ee91C07B2534e1796632A4",
+    "title": "El Olvidao",
+    "description": "El Olvidao (Coleção Uruguay)\nEl Olvidao integra a coleção “Uruguay” , concebida após deslocamentos pela costa uruguaia — La Paloma, Punta del Este, Montevideo e La Esmeralda — onde o tempo atua como erosão e memória. Em pinus sobre base de ipê de demolição, a obra explora a tensão entre leveza e permanência: um corpo mais poroso encontra apoio num material denso, carregado de passado. A base, mantida “limpa” mas deliberadamente irregular, evidencia a remoção de matéria apodrecida como gesto de edição — cicatriz assumida, não defeito ocultado. Selada com cera de carnaúba, a peça preserva o veio e afirma a madeira como arquivo.",
+    "neurotipo": "Outro",
+    "estadoCognitivo": "Estado de Fluxo",
+    "totalFractions": 100,
+    "imageUrl": "https://gateway.pinata.cloud/ipfs/Qmem2pNcg8LTACuf3EXV5eK61bjHFUNxCCurKnn7W9CSuh",
+    "status": "tokenized",
+    "submittedAt": "2026-05-03T20:52:28.376Z",
+    "valorObra": "6450",
+    "moeda": "BRL",
+    "precoPorFracao": "R$ 64,50",
+    "approvedAt": "2026-05-03T22:36:31.009Z",
+    "ipfsCid": "QmZgufobdbj9JZnWwLALsrjTDYEybCg6MWQ8BNQPVGzELg",
+    "txHash": "0xff9a1e44f571934ce70aa09813346b96db742e835ee41291db1fc78c5a88057d"
+  }
+]

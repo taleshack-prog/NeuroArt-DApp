@@ -39,7 +39,7 @@ contract NeuroArtFractionalVault is ERC20, Initializable {
         address _artist,
         uint256 _totalFractions
     ) external initializer {
-        require(_totalFractions >= 100, "Vault: minimum 100 fractions");
+        require(_totalFractions >= 1, "Vault: minimum 1 fraction");
         require(_totalFractions <= 100_000_000 * 10 ** 18, "Vault: maximum 100M fractions");
         obraId = _obraId;
         ipfsHash = _ipfsHash;
