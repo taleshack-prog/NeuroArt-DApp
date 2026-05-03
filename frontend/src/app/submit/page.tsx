@@ -13,7 +13,6 @@ type FormData = {
   artistName: string
   title: string
   description: string
-  neurotipo: string
   estadoCognitivo: string
   totalFractions: string
   valorObra: string
@@ -23,7 +22,6 @@ type FormData = {
   imageBase64: string
 }
 
-const NEUROTIPOS = ['TDAH', 'TEA', 'Dislexia', 'Discalculia', 'Superdotação', 'Outro']
 const ESTADOS = ['Hiperfoco', 'Estado de Fluxo', 'Divergência Criativa', 'Monofoco', 'Expansão Cognitiva']
 const MOEDAS: { value: Moeda; label: string; symbol: string }[] = [
   { value: 'BRL', label: 'Real Brasileiro', symbol: 'R$' },
@@ -44,7 +42,6 @@ export default function SubmitPage() {
     artistName: '',
     title: '',
     description: '',
-    neurotipo: '',
     estadoCognitivo: '',
     totalFractions: '100000',
     valorObra: '',
@@ -89,7 +86,6 @@ export default function SubmitPage() {
     e.preventDefault()
     if (!mounted || !isConnected || !address) { setError('Conecte sua carteira primeiro.'); return }
     if (!form.imageFile) { setError('Selecione uma imagem da obra.'); return }
-    if (!form.neurotipo) { setError('Selecione o neurotipo.'); return }
     if (!form.estadoCognitivo) { setError('Selecione o estado cognitivo.'); return }
     if (!form.valorObra || parseFloat(form.valorObra) <= 0) { setError('Informe o valor da obra.'); return }
     if (Number(form.totalFractions) < 1) { setError('Mínimo de 1 fração.'); return }
@@ -107,7 +103,6 @@ export default function SubmitPage() {
           artistWallet: address,
           title: form.title,
           description: form.description,
-          neurotipo: form.neurotipo,
           estadoCognitivo: form.estadoCognitivo,
           totalFractions: form.totalFractions,
           valorObra: form.valorObra,
@@ -259,14 +254,6 @@ export default function SubmitPage() {
                 className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-slate-400 text-sm mb-1.5">Neurotipo *</label>
-                <select name="neurotipo" value={form.neurotipo} onChange={handleInput} required
-                  className="w-full bg-slate-950/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
-                  <option value="">Selecione...</option>
-                  {NEUROTIPOS.map(n => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </div>
               <div>
                 <label className="block text-slate-400 text-sm mb-1.5">Estado Cognitivo *</label>
                 <select name="estadoCognitivo" value={form.estadoCognitivo} onChange={handleInput} required

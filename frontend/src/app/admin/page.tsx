@@ -44,7 +44,7 @@ function SubmissionCard({ art, onApprove, onReject, onTokenize, tokenizing }: {
           </div>
           <p className="text-slate-500 text-sm mt-2 line-clamp-2">{art.description}</p>
           <div className="flex flex-wrap gap-2 mt-3">
-            <span className="px-2 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs">{art.neurotipo}</span>
+            
             <span className="px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">{art.estadoCognitivo}</span>
             <span className="px-2 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-xs">{art.totalFractions?.toLocaleString()} frações</span>
             {art.valorObra && (
@@ -180,7 +180,6 @@ export default function AdminPage() {
           metadata: {
             name: art.title,
             description: art.description,
-            neurotipo: art.neurotipo,
             estadoCognitivo: art.estadoCognitivo,
             artistName: art.artistName,
             artistWallet: art.artistWallet,

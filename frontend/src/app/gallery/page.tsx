@@ -13,7 +13,6 @@ type ArtWork = {
   imageUrl: string
   availablePercentage: number
   pricePerFraction: string
-  neurotipo: string
   estadoCognitivo: string
 }
 
@@ -25,7 +24,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/6366f1?text=NS+001',
     availablePercentage: 75,
     pricePerFraction: '0.05 $NEURO',
-    neurotipo: 'TDAH',
     estadoCognitivo: 'Hiperfoco',
   },
   {
@@ -35,7 +33,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/10b981?text=OA+002',
     availablePercentage: 40,
     pricePerFraction: '0.08 $NEURO',
-    neurotipo: 'TEA',
     estadoCognitivo: 'Estado de Fluxo',
   },
   {
@@ -45,7 +42,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/a855f7?text=NG+003',
     availablePercentage: 90,
     pricePerFraction: '0.12 $NEURO',
-    neurotipo: 'Dislexia',
     estadoCognitivo: 'Divergência Criativa',
   },
   {
@@ -55,7 +51,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/f59e0b?text=F+004',
     availablePercentage: 55,
     pricePerFraction: '0.03 $NEURO',
-    neurotipo: 'TDAH',
     estadoCognitivo: 'Hiperfoco',
   },
   {
@@ -65,7 +60,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/ec4899?text=P+005',
     availablePercentage: 20,
     pricePerFraction: '0.07 $NEURO',
-    neurotipo: 'TEA',
     estadoCognitivo: 'Monofoco',
   },
   {
@@ -75,7 +69,6 @@ const artworks: ArtWork[] = [
     imageUrl: 'https://placehold.co/500x500/0f172a/06b6d4?text=BC+006',
     availablePercentage: 65,
     pricePerFraction: '0.09 $NEURO',
-    neurotipo: 'TDAH',
     estadoCognitivo: 'Estado de Fluxo',
   },
 ]
@@ -99,7 +92,6 @@ function ArtCard({ art }: { art: ArtWork }) {
         />
         <div className="absolute top-3 left-3 flex gap-2">
           <span className="px-2 py-1 rounded-full bg-slate-950/80 border border-indigo-500/40 text-indigo-400 text-xs font-medium">
-            {art.neurotipo}
           </span>
           <span className="px-2 py-1 rounded-full bg-slate-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-medium">
             {art.estadoCognitivo}
