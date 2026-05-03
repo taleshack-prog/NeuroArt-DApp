@@ -1,10 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount, useBalance } from 'wagmi'
-import { Brain, ArrowLeft, Wallet, ImageIcon, FlaskConical, TrendingUp } from 'lucide-react'
+import { Brain, ArrowLeft, Wallet, ImageIcon, FlaskConical, TrendingUp, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { isFounder } from '@/lib/constants'
 
 const NEURO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
@@ -22,6 +24,8 @@ const mockPesquisas = [
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const { data: balance } = useBalance({
     address,
     token: NEURO_TOKEN_ADDRESS,
@@ -46,7 +50,12 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
-          <ConnectKitButton />
+          {address && isFounder(address) && (
+              <Link href="/admin" className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 rounded-xl text-sm font-semibold hover:bg-indigo-600/30 transition-all">
+                <Shield className="w-4 h-4" /> Painel Admin
+              </Link>
+            )}
+            <ConnectKitButton />
         </div>
       </header>
 
@@ -60,6 +69,11 @@ export default function DashboardPage() {
             className="border border-indigo-500/40 bg-indigo-500/10 rounded-2xl p-6 text-center"
           >
             <p className="text-indigo-300 font-medium mb-3">Conecte sua carteira para ver seus ativos</p>
+            {address && isFounder(address) && (
+              <Link href="/admin" className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 rounded-xl text-sm font-semibold hover:bg-indigo-600/30 transition-all">
+                <Shield className="w-4 h-4" /> Painel Admin
+              </Link>
+            )}
             <ConnectKitButton />
           </motion.div>
         )}

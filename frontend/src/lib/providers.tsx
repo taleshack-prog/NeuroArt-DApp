@@ -10,17 +10,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
   const [queryClient] = useState(() => new QueryClient())
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  useEffect(() => setMounted(true), [])
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider theme="midnight">
-          {mounted ? children : (
-            <div className="min-h-screen bg-slate-950" />
-          )}
+          {mounted ? children : <div className="min-h-screen bg-slate-950" />}
         </ConnectKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
