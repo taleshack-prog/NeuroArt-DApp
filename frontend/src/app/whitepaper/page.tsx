@@ -205,14 +205,14 @@ export default function WhitepaperPage() {
                   <Users className="w-5 h-5 text-indigo-400" />
                   <h3 className="text-white font-bold">Conselho Criativo</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed">Detentores de SBTs de reputacao. Tokens nao transferiveis com poder de Veto Protetivo.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">Fase inicial: governanca pelos fundadores Tales Hack e Prof. Alexandre de Souza Fortis. Apos 2 anos de operacao, transicao gradual para modelo DAO.</p>
               </div>
               <div className="bg-slate-900/60 border border-emerald-500/30 rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <TrendingUp className="w-5 h-5 text-emerald-400" />
-                  <h3 className="text-white font-bold">Conselho Economico</h3>
+                  <h3 className="text-white font-bold">Transicao para DAO</h3>
                 </div>
-                <p className="text-slate-500 text-sm leading-relaxed">Detentores de . Decidem sobre tesouraria, parcerias e parametros de taxas.</p>
+                <p className="text-slate-500 text-sm leading-relaxed">Apos 2 anos, os detentores de $NEURO assumem progressivamente as decisoes de tesouraria, parcerias e parametros do protocolo.</p>
               </div>
             </div>
           </section>
