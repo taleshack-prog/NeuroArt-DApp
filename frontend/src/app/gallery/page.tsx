@@ -6,11 +6,12 @@ import { useAccount, useBalance } from 'wagmi'
 import { Brain, ArrowLeft, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { getUSDtoBRL, getETHPrice, calcPrices } from '@/lib/exchange'
 import type { ArtworkSubmission } from '@/types'
 
 const NEURO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
-function ArtCard({ art }: { art: ArtworkSubmission }) {
+function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: number, ethUSD: number }) {
   const isTokenized = art.status === 'tokenized'
   const moedaSymbol = art.moeda === 'BRL' ? 'R$' : art.moeda === 'USD' ? 'US$' : 'ETH'
 
@@ -63,9 +64,15 @@ function ArtCard({ art }: { art: ArtworkSubmission }) {
             <div className="text-emerald-400 font-bold">
               {moedaSymbol} {Number(art.valorObra || 0).toLocaleString('pt-BR')}
             </div>
-            {art.precoPorFracao && (
-              <div className="text-purple-400 text-xs">{art.precoPorFracao} / fração</div>
-            )}
+            {art.valorObra && art.totalFractions && (() => {
+              const p = calcPrices(Number(art.valorObra), art.totalFractions, usdBRL, ethUSD)
+              return (
+                <div className="mt-1 space-y-0.5">
+                  <div className="text-blue-400 text-xs font-semibold">{p.fracaoUSDC} USDC / fração</div>
+                  <div className="text-slate-400 text-xs">{p.fracaoETH} ETH / fração</div>
+                </div>
+              )
+            })()}
           </div>
           {isTokenized ? (
             <motion.button
@@ -99,6 +106,13 @@ export default function GalleryPage() {
   const [artworks, setArtworks] = useState<ArtworkSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'tokenized'>('all')
+  const [usdBRL, setUsdBRL] = useState(5.75)
+  const [ethUSD, setEthUSD] = useState(2300)
+
+  useEffect(() => {
+    getUSDtoBRL().then(setUsdBRL)
+    getETHPrice().then(setEthUSD)
+  }, [])
 
   useEffect(() => {
     fetch('/api/submissions')
@@ -174,7 +188,7 @@ export default function GalleryPage() {
           initial="hidden" animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {filtered.map(art => <ArtCard key={art.id} art={art} />)}
+          {filtered.map(art => <ArtCard key={art.id} art={art} usdBRL={usdBRL} ethUSD={ethUSD} />)}
         </motion.div>
       </div>
       <footer className="border-t border-slate-800 mt-20 py-8 text-center text-slate-500 text-sm">
