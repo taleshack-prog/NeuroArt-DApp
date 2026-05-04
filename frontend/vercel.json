@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "next build --no-lint",
+  "outputDirectory": ".next",
+  "installCommand": "npm install"
+}
