@@ -28,9 +28,8 @@ export default function Home() {
             </span>
           </motion.div>
           <div className="flex items-center gap-3">
-            <Link href="/gallery" className="hidden md:block text-slate-400 hover:text-white text-sm font-medium transition-colors">
-              Galeria
-            </Link>
+            <Link href="/gallery" className="hidden md:block text-slate-400 hover:text-white text-sm font-medium transition-colors">Galeria</Link>
+            <Link href="/whitepaper" className="hidden md:block text-slate-400 hover:text-white text-sm font-medium transition-colors">Whitepaper</Link>
             <Link href="/submit" className="hidden md:flex items-center gap-1.5 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
               <Upload className="w-4 h-4" /> Submeter Obra
             </Link>
