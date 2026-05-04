@@ -77,3 +77,18 @@ main().catch((error) => {
   console.error("❌ Erro:", error);
   process.exit(1);
 });
+
+// Deploy separado do Marketplace (rodar após ter USDC testnet)
+export async function deployMarketplace() {
+  const [deployer] = await ethers.getSigners();
+  
+  // USDC na Base Sepolia
+  const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+  const DAPP_WALLET = "0xE9eFC721405e1026B1ee91C07B2534e1796632A4";
+
+  console.log("Deployando FractionMarketplace...");
+  const Marketplace = await ethers.getContractFactory("FractionMarketplace");
+  const marketplace = await Marketplace.deploy(USDC_BASE_SEPOLIA, DAPP_WALLET);
+  await marketplace.waitForDeployment();
+  console.log("FractionMarketplace:", await marketplace.getAddress());
+}
