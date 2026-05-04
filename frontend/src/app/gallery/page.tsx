@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ConnectKitButton } from 'connectkit'
+import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useBalance } from 'wagmi'
 import { Brain, ArrowLeft, Upload } from 'lucide-react'
 import Link from 'next/link'
@@ -155,7 +155,7 @@ export default function GalleryPage() {
               className="hidden md:flex items-center gap-1.5 px-4 py-2 bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-600/30 transition-all">
               <Upload className="w-4 h-4" /> Submeter Obra
             </Link>
-            <ConnectKitButton />
+            <WalletButton />
           </div>
         </div>
       </header>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ConnectKitButton } from 'connectkit'
+import { WalletButton } from '@/components/WalletButton'
 import { useAccount } from 'wagmi'
 import { Brain, ArrowLeft, Upload, CheckCircle, AlertCircle, DollarSign } from 'lucide-react'
 import Link from 'next/link'
@@ -189,7 +189,7 @@ export default function SubmitPage() {
               </span>
             </div>
           </div>
-          <ConnectKitButton />
+          <WalletButton />
         </div>
       </header>
 

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { ConnectKitButton } from 'connectkit'
+import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useBalance } from 'wagmi'
 import { Brain, ArrowLeft, Wallet, ImageIcon, FlaskConical, TrendingUp, Shield } from 'lucide-react'
 import Link from 'next/link'
@@ -55,7 +55,7 @@ export default function DashboardPage() {
                 <Shield className="w-4 h-4" /> Painel Admin
               </Link>
             )}
-            <ConnectKitButton />
+            <WalletButton />
         </div>
       </header>
 
@@ -74,7 +74,7 @@ export default function DashboardPage() {
                 <Shield className="w-4 h-4" /> Painel Admin
               </Link>
             )}
-            <ConnectKitButton />
+            <WalletButton />
           </motion.div>
         )}
 

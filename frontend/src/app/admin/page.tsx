@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ConnectKitButton } from 'connectkit'
+import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader } from 'lucide-react'
 import Link from 'next/link'
@@ -251,7 +251,7 @@ export default function AdminPage() {
                 <CheckCircle className="w-3 h-3" /> Fundador verificado
               </span>
             )}
-            <ConnectKitButton />
+            <WalletButton />
           </div>
         </div>
       </header>
@@ -262,7 +262,7 @@ export default function AdminPage() {
             <Shield className="w-16 h-16 text-slate-700 mx-auto mb-4" />
             <h2 className="text-2xl font-black text-slate-400 mb-2">Área Restrita</h2>
             <p className="text-slate-600 mb-6">Conecte a carteira dos fundadores para acessar</p>
-            <ConnectKitButton />
+            <WalletButton />
           </div>
         )}
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ConnectKitButton } from 'connectkit'
+import { WalletButton } from '@/components/WalletButton'
 import { useAccount } from 'wagmi'
 import { Brain, Zap, FlaskConical, ArrowRight, Upload, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
@@ -37,7 +37,7 @@ export default function Home() {
             <Link href="/dashboard" className="hidden md:flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors">
               <LayoutDashboard className="w-4 h-4" /> Dashboard
             </Link>
-            <ConnectKitButton />
+            <WalletButton />
           </div>
         </div>
       </header>
