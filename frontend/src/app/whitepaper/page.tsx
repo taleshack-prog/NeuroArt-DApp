@@ -161,6 +161,42 @@ export default function WhitepaperPage() {
             </div>
           </section>
 
+          <section id="airdrop">
+            <h2 className="text-2xl font-black text-white mb-6 pb-3 border-b border-slate-800">5.1 Programa de Airdrop para Artistas</h2>
+            <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-6 mb-6">
+              <h3 className="text-emerald-400 font-bold mb-3">500.000 $NEURO para a comunidade criativa</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                Para incentivar a participacao de artistas neurodivergentes no ecossistema, 500.000 $NEURO serao distribuidos proporcionalmente ao numero de obras aprovadas por cada artista durante o periodo de 12 meses.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                  <div className="text-emerald-400 font-black text-xl mb-1">500.000</div>
+                  <div className="text-slate-500 text-xs">$NEURO no pool</div>
+                </div>
+                <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                  <div className="text-emerald-400 font-black text-xl mb-1">12 meses</div>
+                  <div className="text-slate-500 text-xs">06/05/2026 a 06/05/2027</div>
+                </div>
+                <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                  <div className="text-emerald-400 font-black text-xl mb-1">Proporcional</div>
+                  <div className="text-slate-500 text-xs">obras aprovadas / total</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5">
+              <h3 className="text-white font-bold mb-3">Como funciona</h3>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">1.</span> Artista submete obra pela plataforma</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">2.</span> Fundadores avaliam e aprovam a submissao</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">3.</span> Obra aprovada conta para o calculo proporcional</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">4.</span> Em 06/05/2027, o pool e distribuido automaticamente via contrato inteligente</li>
+              </ul>
+              <div className="mt-4 p-3 bg-indigo-950/30 border border-indigo-500/20 rounded-lg">
+                <p className="text-indigo-300 text-xs">Exemplo: 20 obras aprovadas no periodo. Artista com 5 obras aprovadas recebe 5/20 x 500.000 = 125.000 $NEURO</p>
+              </div>
+            </div>
+          </section>
+
           <section id="governanca">
             <h2 className="text-2xl font-black text-white mb-6 pb-3 border-b border-slate-800">6. Governanca Hibrida</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
