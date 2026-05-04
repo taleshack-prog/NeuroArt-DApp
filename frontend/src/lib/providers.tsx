@@ -16,10 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider
           theme="midnight"
-          options={{
-            hideNoWalletCTA: true,
-            walletConnectCTA: 'never',
-          }}
+            
         >
           {mounted ? children : <div className="min-h-screen bg-slate-950" />}
         </ConnectKitProvider>
