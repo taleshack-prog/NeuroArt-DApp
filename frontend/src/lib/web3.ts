@@ -3,7 +3,7 @@ import { base, baseSepolia } from 'wagmi/chains'
 import { metaMask } from 'wagmi/connectors'
 
 export const config = createConfig({
-  chains: [baseSepolia, base],
+  chains: [base, baseSepolia],
   connectors: [
     metaMask({
       dappMetadata: {
