@@ -102,28 +102,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tokenomics */}
+      {/* Whitepaper CTA */}
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="border border-slate-800 rounded-2xl p-8 bg-slate-900/40">
-          <h2 className="text-2xl font-black mb-6 text-center">Tokenomics <span className="text-indigo-400">$NEURO</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            {[
-              { label: 'Venda Pública / Liquidez DApp', pct: '70%', tokens: '7.000.000', color: 'text-emerald-400' },
-              { label: 'Tales Hack — Fundador', pct: '15%', tokens: '1.500.000', color: 'text-indigo-400' },
-              { label: 'Prof. Alexandre Fortis — Co-fundador', pct: '15%', tokens: '1.500.000', color: 'text-purple-400' },
-            ].map((item, i) => (
-              <div key={i} className="bg-slate-950/60 rounded-xl p-4 border border-slate-800">
-                <div className={`text-3xl font-black ${item.color} mb-1`}>{item.pct}</div>
-                <div className="text-slate-300 font-semibold text-sm mb-1">{item.tokens} NEURO</div>
-                <div className="text-slate-500 text-xs">{item.label}</div>
-              </div>
-            ))}
+        <div className="border border-indigo-500/20 rounded-2xl p-8 bg-indigo-500/5 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-6">
+            <Brain className="w-8 h-8 text-indigo-400" />
           </div>
-          <p className="text-center text-slate-500 text-xs mt-4">Supply total: 10.000.000 $NEURO · Burn deflacionário de 1% nas taxas do marketplace</p>
+          <h2 className="text-2xl font-black mb-3">Entenda a visao do projeto</h2>
+          <p className="text-slate-400 mb-6 max-w-xl mx-auto">
+            Antes de investir, leia nosso Whitepaper. Ele explica a filosofia, a ciencia e a economia por tras do NeuroArt DApp.
+          </p>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">
+            <Link href="/whitepaper" className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-bold flex items-center gap-2 hover:from-indigo-500 hover:to-purple-500 transition-all">
+              Ler o Whitepaper
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* CTA Artistas */}
+            {/* CTA Artistas */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="border border-emerald-500/20 rounded-2xl p-8 bg-emerald-500/5 text-center">
           <Upload className="w-12 h-12 text-emerald-400 mx-auto mb-4" />

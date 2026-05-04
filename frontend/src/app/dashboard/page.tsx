@@ -10,17 +10,7 @@ import { isFounder } from '@/lib/constants'
 
 const NEURO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
-const mockFracoes = [
-  { obra: 'Neuro-Sinfonia #001', fracoes: '12.500', percentual: '1.25%', valor: '625 $NEURO', status: 'Ativo' },
-  { obra: 'Ondas Alpha #002', fracoes: '8.000', percentual: '0.80%', valor: '640 $NEURO', status: 'Ativo' },
-  { obra: 'NeuroGenesis #003', fracoes: '25.000', percentual: '2.50%', valor: '3.000 $NEURO', status: 'Ativo' },
-]
 
-const mockPesquisas = [
-  { titulo: 'Protocolo BCI-Hiperfoco v1.0', area: 'Brain-Computer Interface', status: 'Em andamento', aporte: '12.000 $NEURO' },
-  { titulo: 'Jiu-Jitsu & Controle Inibitório', area: 'Artes Marciais / Neurociência', status: 'Aprovado', aporte: '8.500 $NEURO' },
-  { titulo: 'Neuroplasticidade via Arte Digital', area: 'Neuroplasticidade', status: 'Em revisão', aporte: '15.000 $NEURO' },
-]
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount()
@@ -94,22 +84,22 @@ export default function DashboardPage() {
             },
             {
               icon: <ImageIcon className="w-6 h-6 text-emerald-400" />,
-              label: 'Frações em Carteira',
-              value: isConnected ? '3 obras' : '—',
-              sub: '45.500 frações totais',
+              label: 'Fracoes em Carteira',
+              value: isConnected ? '0 obras' : '—',
+              sub: 'Adquira na galeria',
               color: 'border-emerald-500/30',
             },
             {
               icon: <TrendingUp className="w-6 h-6 text-purple-400" />,
-              label: 'Valor em Portfólio',
-              value: isConnected ? '4.265 $NEURO' : '—',
+              label: 'Valor em Portfolio',
+              value: isConnected ? '0 $NEURO' : '—',
               sub: 'Estimativa atual',
               color: 'border-purple-500/30',
             },
             {
               icon: <FlaskConical className="w-6 h-6 text-amber-400" />,
               label: 'Pesquisas Financiadas',
-              value: '3 projetos',
+              value: 'Em breve',
               sub: 'Fundo DeSci ativo',
               color: 'border-amber-500/30',
             },
@@ -142,34 +132,16 @@ export default function DashboardPage() {
             <ImageIcon className="w-5 h-5 text-emerald-400" />
             Minhas Frações
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-slate-500 border-b border-slate-800">
-                  <th className="text-left pb-3 font-medium">Obra</th>
-                  <th className="text-right pb-3 font-medium">Frações</th>
-                  <th className="text-right pb-3 font-medium">Participação</th>
-                  <th className="text-right pb-3 font-medium">Valor Est.</th>
-                  <th className="text-right pb-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {mockFracoes.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-3 text-white font-medium">{row.obra}</td>
-                    <td className="py-3 text-right text-slate-300 font-mono">{row.fracoes}</td>
-                    <td className="py-3 text-right text-indigo-400 font-semibold">{row.percentual}</td>
-                    <td className="py-3 text-right text-emerald-400 font-semibold">{row.valor}</td>
-                    <td className="py-3 text-right">
-                      <span className="px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {!isConnected ? (
+            <p className="text-slate-500 text-sm text-center py-8">Conecte sua carteira para ver suas frações.</p>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-slate-500 text-sm mb-4">Suas frações aparecerão aqui após adquirir obras na galeria.</p>
+              <Link href="/gallery" className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all">
+                Ver Galeria
+              </Link>
+            </div>
+          )}
         </motion.div>
 
         {/* Pesquisas Financiadas */}
@@ -183,31 +155,13 @@ export default function DashboardPage() {
             <FlaskConical className="w-5 h-5 text-purple-400" />
             Pesquisas Financiadas pelo Fundo DeSci
           </h2>
-          <div className="space-y-4">
-            {mockPesquisas.map((p, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-slate-950/40 border border-slate-800 rounded-xl">
-                <div>
-                  <div className="font-semibold text-white">{p.titulo}</div>
-                  <div className="text-slate-500 text-sm mt-0.5">{p.area}</div>
-                </div>
-                <div className="text-right ml-4 shrink-0">
-                  <div className={`text-xs font-medium px-2 py-1 rounded-full mb-1 ${
-                    p.status === 'Em andamento'
-                      ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400'
-                      : p.status === 'Aprovado'
-                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                      : 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
-                  }`}>
-                    {p.status}
-                  </div>
-                  <div className="text-purple-400 font-bold text-sm">{p.aporte}</div>
-                </div>
-              </div>
-            ))}
+          <div className="text-center py-8">
+            <p className="text-slate-500 text-sm">Os editais de pesquisa serao publicados na Fase 2 do projeto.</p>
+            <p className="text-slate-600 text-xs mt-2">Previsto para Q1 2027</p>
           </div>
         </motion.div>
 
-        {/* Fundadores */}
+                {/* Fundadores */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
