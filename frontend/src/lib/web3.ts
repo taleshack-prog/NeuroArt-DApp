@@ -8,7 +8,7 @@ export const config = createConfig({
     metaMask({
       dappMetadata: {
         name: 'NeuroArt DApp',
-        url: 'http://localhost:3003',
+        url: 'https://neuro-art-d-app.vercel.app',
       }
     }),
   ],
