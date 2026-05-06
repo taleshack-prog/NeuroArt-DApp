@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
-import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2 } from 'lucide-react'
+import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2, Microscope } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
@@ -107,7 +107,7 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
-  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog'>('obras')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog' | 'pesquisas'>('obras')
   const DAPP_WALLET = '0xE9eFC721405e1026B1ee91C07B2534e1796632A4' as `0x${string}`
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`
   const NEURO_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0') as `0x${string}`
@@ -116,6 +116,7 @@ export default function AdminPage() {
   const [savingPost, setSavingPost] = useState(false)
   const [showNewPost, setShowNewPost] = useState(false)
   const [editingPost, setEditingPost] = useState<any>(null)
+  const [proposals, setProposals] = useState<any[]>([])
   const [tokenizing, setTokenizing] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -135,6 +136,10 @@ export default function AdminPage() {
     fetch('/api/posts')
       .then(r => r.json())
       .then(data => setPosts(Array.isArray(data) ? data : []))
+      .catch(() => {})
+    fetch('/api/research')
+      .then(r => r.json())
+      .then(data => setProposals(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [])
 
@@ -299,6 +304,7 @@ export default function AdminPage() {
                 { id: 'airdrop', label: 'Airdrop', icon: <Gift className="w-4 h-4" /> },
                 { id: 'financeiro', label: 'Financeiro', icon: <DollarSign className="w-4 h-4" /> },
                 { id: 'blog', label: 'Blog', icon: <PenLine className="w-4 h-4" /> },
+                { id: 'pesquisas', label: 'Pesquisas', icon: <Microscope className="w-4 h-4" /> },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
@@ -682,6 +688,98 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'pesquisas' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-black text-white">Propostas de Pesquisa</h2>
+                  <div className="flex gap-3">
+                    <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+                      {proposals.filter(p => p.status === 'pending').length} pendentes
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                      {proposals.filter(p => p.status === 'approved').length} aprovadas
+                    </span>
+                  </div>
+                </div>
+
+                {proposals.length === 0 && (
+                  <div className="text-center py-16 text-slate-600">Nenhuma proposta recebida ainda.</div>
+                )}
+
+                {proposals.map((p, i) => (
+                  <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                            p.status === 'pending' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
+                            p.status === 'approved' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                            p.status === 'rejected' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                            'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
+                          }`}>
+                            {p.status === 'pending' ? 'Pendente' :
+                             p.status === 'approved' ? 'Aprovada' :
+                             p.status === 'rejected' ? 'Rejeitada' : 'Em andamento'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs">{p.category}</span>
+                        </div>
+                        <h3 className="text-white font-black text-lg">{p.title}</h3>
+                        <p className="text-slate-400 text-sm mt-1">por {p.researcher_name} {p.institution ? `· ${p.institution}` : ''}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {p.budget_requested && (
+                          <div className="text-emerald-400 font-bold">US$ {Number(p.budget_requested).toLocaleString()}</div>
+                        )}
+                        {p.duration_months && (
+                          <div className="text-slate-500 text-xs">{p.duration_months} meses</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-slate-400 text-sm leading-relaxed mb-4">{p.abstract}</p>
+
+                    {p.methodology && (
+                      <div className="bg-slate-950/40 rounded-xl p-3 mb-4">
+                        <p className="text-slate-500 text-xs font-semibold mb-1">METODOLOGIA</p>
+                        <p className="text-slate-400 text-sm">{p.methodology}</p>
+                      </div>
+                    )}
+
+                    <div className="text-slate-600 text-xs mb-4">
+                      Submetido em {new Date(p.submitted_at).toLocaleDateString('pt-BR')}
+                      {p.researcher_email && ` · ${p.researcher_email}`}
+                      {p.researcher_wallet && ` · ${p.researcher_wallet.slice(0,6)}...${p.researcher_wallet.slice(-4)}`}
+                    </div>
+
+                    {p.status === 'pending' && (
+                      <div className="flex gap-3">
+                        <button onClick={async () => {
+                          await fetch(`/api/research/${p.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'approved' })
+                          })
+                          setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'approved'} : prop))
+                        }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-600/30 transition-all">
+                          <CheckCircle className="w-4 h-4" /> Aprovar
+                        </button>
+                        <button onClick={async () => {
+                          await fetch(`/api/research/${p.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'rejected' })
+                          })
+                          setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'rejected'} : prop))
+                        }} className="flex items-center gap-2 px-4 py-2 bg-red-600/20 border border-red-500/40 text-red-400 rounded-xl text-sm font-semibold hover:bg-red-600/30 transition-all">
+                          <XCircle className="w-4 h-4" /> Rejeitar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </>
