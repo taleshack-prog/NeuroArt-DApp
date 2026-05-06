@@ -144,11 +144,12 @@ export default function WhitepaperPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800">
                   {[
-                    ["Venda Publica / Liquidez", "20% - 2.000.000", "100% TGE"],
-                    ["Ecossistema e Pesquisa DeSci", "40% - 4.000.000", "Linear 48 meses"],
-                    ["Equipe e Fundadores", "15% - 1.500.000", "Cliff 12m + 24m"],
-                    ["Tesouraria da DAO", "15% - 1.500.000", "Governanca ativa"],
-                    ["Parcerias Estrategicas", "10% - 1.000.000", "Cliff 6 meses"],
+                    ["Pre-venda / TGE", "20% - 2.000.000", "100% TGE"],
+                    ["Venda posterior + DEX pools", "40% - 4.000.000", "Liberacao gradual"],
+                    ["Tales Hack - Fundador", "15% - 1.500.000", "Cliff 12m + 24m vesting"],
+                    ["Prof. Alexandre Fortis - Co-fundador", "15% - 1.500.000", "Cliff 12m + 24m vesting"],
+                    ["Airdrop Artistas Neurodivergentes", "2.5% - 250.000", "06/05/2026 a 06/05/2027"],
+                    ["Fundo de Caixa DApp (reserva BTC)", "7.5% - 750.000", "Governanca dos fundadores"],
                   ].map(([label, value, sub], i) => (
                     <tr key={i} className="hover:bg-slate-900/50">
                       <td className="py-3 px-4 text-slate-300">{label}</td>
