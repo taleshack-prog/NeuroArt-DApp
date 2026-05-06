@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
-import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet } from 'lucide-react'
+import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
@@ -107,7 +107,11 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
-  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro'>('obras')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog'>('obras')
+  const [posts, setPosts] = useState<any[]>([])
+  const [newPost, setNewPost] = useState({ title: '', excerpt: '', content: '', category: 'Novidades NeuroArt', published: true })
+  const [savingPost, setSavingPost] = useState(false)
+  const [showNewPost, setShowNewPost] = useState(false)
   const DAPP_WALLET = '0xE9eFC721405e1026B1ee91C07B2534e1796632A4' as `0x${string}`
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`
   const NEURO_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0') as `0x${string}`
@@ -128,6 +132,10 @@ export default function AdminPage() {
       .then(r => r.json())
       .then(data => setSubmissions(Array.isArray(data) ? data : []))
       .catch(() => setSubmissions([]))
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(data => setPosts(Array.isArray(data) ? data : []))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -290,6 +298,7 @@ export default function AdminPage() {
                 { id: 'artistas', label: 'Artistas', icon: <Users className="w-4 h-4" /> },
                 { id: 'airdrop', label: 'Airdrop', icon: <Gift className="w-4 h-4" /> },
                 { id: 'financeiro', label: 'Financeiro', icon: <DollarSign className="w-4 h-4" /> },
+                { id: 'blog', label: 'Blog', icon: <PenLine className="w-4 h-4" /> },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
@@ -555,6 +564,81 @@ export default function AdminPage() {
                     className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-sm font-semibold hover:border-indigo-500 transition-all">
                     <Eye className="w-4 h-4" /> Ver carteira DApp no BaseScan
                   </a>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'blog' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-white">Gerenciar Blog</h2>
+                  <button onClick={() => setShowNewPost(!showNewPost)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all">
+                    <PenLine className="w-4 h-4" /> Novo Post
+                  </button>
+                </div>
+
+                {showNewPost && (
+                  <div className="bg-slate-900/60 border border-indigo-500/30 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-indigo-400 font-bold">Novo Artigo</h3>
+                    <input value={newPost.title} onChange={e => setNewPost({...newPost, title: e.target.value})}
+                      placeholder="Titulo do artigo"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+                    <input value={newPost.excerpt} onChange={e => setNewPost({...newPost, excerpt: e.target.value})}
+                      placeholder="Resumo (excerpt)"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+                    <select value={newPost.category} onChange={e => setNewPost({...newPost, category: e.target.value})}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                      {["Arte & Criatividade", "Jiu-Jitsu & Neurociencia", "Neurodivergencia", "Natureza como Terapia", "Novidades NeuroArt", "Papers & Pesquisas"].map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <textarea value={newPost.content} onChange={e => setNewPost({...newPost, content: e.target.value})}
+                      placeholder="Conteudo completo do artigo (use linha em branco para separar paragrafos)"
+                      rows={10}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 resize-none" />
+                    <div className="flex gap-3">
+                      <button onClick={() => setShowNewPost(false)}
+                        className="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-600 transition-all">
+                        Cancelar
+                      </button>
+                      <button onClick={async () => {
+                        setSavingPost(true)
+                        const res = await fetch('/api/posts', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ ...newPost, author: 'Tales Hack', authorWallet: address })
+                        })
+                        const post = await res.json()
+                        setPosts(prev => [post, ...prev])
+                        setNewPost({ title: '', excerpt: '', content: '', category: 'Novidades NeuroArt', published: true })
+                        setShowNewPost(false)
+                        setSavingPost(false)
+                      }} disabled={savingPost || !newPost.title || !newPost.content}
+                        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all disabled:opacity-50">
+                        {savingPost ? 'Publicando...' : 'Publicar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {posts.length === 0 && <p className="text-slate-600 text-center py-8">Nenhum post publicado ainda.</p>}
+                  {posts.map((post, i) => (
+                    <div key={i} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">{post.category}</span>
+                        </div>
+                        <h4 className="text-white font-bold truncate">{post.title}</h4>
+                        <p className="text-slate-500 text-xs mt-0.5">{new Date(post.publishedAt).toLocaleDateString('pt-BR')} · {post.comments?.length || 0} comentarios</p>
+                      </div>
+                      <a href={`/blog/${post.slug}`} target="_blank"
+                        className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition-all shrink-0">
+                        Ver post
+                      </a>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
