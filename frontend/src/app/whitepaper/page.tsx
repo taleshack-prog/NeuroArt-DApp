@@ -170,7 +170,7 @@ export default function WhitepaperPage() {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="bg-slate-900/60 rounded-xl p-4 text-center">
-                  <div className="text-emerald-400 font-black text-xl mb-1">500.000</div>
+                  <div className="text-emerald-400 font-black text-xl mb-1">250.000</div>
                   <div className="text-slate-500 text-xs">$NEURO no pool</div>
                 </div>
                 <div className="bg-slate-900/60 rounded-xl p-4 text-center">
@@ -192,7 +192,7 @@ export default function WhitepaperPage() {
                 <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">4.</span> Em 06/05/2027, o pool e distribuido automaticamente via contrato inteligente</li>
               </ul>
               <div className="mt-4 p-3 bg-indigo-950/30 border border-indigo-500/20 rounded-lg">
-                <p className="text-indigo-300 text-xs">Exemplo: 20 obras aprovadas no periodo. Artista com 5 obras aprovadas recebe 5/20 x 500.000 = 125.000 $NEURO</p>
+                <p className="text-indigo-300 text-xs">Exemplo: 20 obras aprovadas no periodo. Artista com 5 obras aprovadas recebe 5/20 x 250.000 = 62.500 $NEURO</p>
               </div>
             </div>
           </section>
