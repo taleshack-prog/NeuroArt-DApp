@@ -611,10 +611,19 @@ export default function AdminPage() {
                         <h4 className="text-white font-bold truncate">{post.title}</h4>
                         <p className="text-slate-500 text-xs mt-0.5">{new Date(post.publishedAt || post.published_at).toLocaleDateString('pt-BR')} · {post.comments?.length || 0} comentarios</p>
                       </div>
-                      <a href={`/blog/${post.slug}`} target="_blank"
-                        className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition-all shrink-0">
-                        Ver post
-                      </a>
+                      <div className="flex gap-2 shrink-0">
+                        <a href={`/blog/${post.slug}`} target="_blank"
+                          className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition-all">
+                          Ver
+                        </a>
+                        <button onClick={async () => {
+                          if (!confirm('Apagar este post?')) return
+                          await fetch(`/api/posts/${post.slug}`, { method: 'DELETE' })
+                          setPosts(prev => prev.filter(p => p.slug !== post.slug))
+                        }} className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-xs hover:bg-red-500/20 transition-all">
+                          Apagar
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

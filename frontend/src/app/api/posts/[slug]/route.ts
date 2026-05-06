@@ -19,3 +19,16 @@ export async function GET(_: NextRequest, { params }: { params: { slug: string }
     .order("created_at", { ascending: true })
   return NextResponse.json({ ...post, comments: comments || [] })
 }
+
+export async function DELETE(_: NextRequest, { params }: { params: { slug: string } }) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  )
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('slug', params.slug)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
