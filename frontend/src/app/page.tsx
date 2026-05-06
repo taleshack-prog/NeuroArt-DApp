@@ -104,6 +104,7 @@ const NAV_LINKS = [
   { href: "/whitepaper", label: "Whitepaper" },
   { href: "/research", label: "Pesquisa" },
   { href: "/blog", label: "Blog" },
+  { href: "/research/approved", label: "DeSci" },
 ]
 
 export default function Home() {
