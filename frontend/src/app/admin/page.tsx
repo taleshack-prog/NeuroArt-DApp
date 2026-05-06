@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift } from 'lucide-react'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
+import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
@@ -107,7 +107,14 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
-  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop'>('obras')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro'>('obras')
+  const DAPP_WALLET = '0xE9eFC721405e1026B1ee91C07B2534e1796632A4' as `0x${string}`
+  const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`
+  const NEURO_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0') as `0x${string}`
+
+  const { data: ethBalance } = useBalance({ address: DAPP_WALLET })
+  const { data: usdcBalance } = useBalance({ address: DAPP_WALLET, token: USDC_ADDRESS })
+  const { data: neuroBalance } = useBalance({ address: DAPP_WALLET, token: NEURO_ADDRESS })
   const [tokenizing, setTokenizing] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -282,6 +289,7 @@ export default function AdminPage() {
                 { id: 'obras', label: 'Obras', icon: <LayoutDashboard className="w-4 h-4" /> },
                 { id: 'artistas', label: 'Artistas', icon: <Users className="w-4 h-4" /> },
                 { id: 'airdrop', label: 'Airdrop', icon: <Gift className="w-4 h-4" /> },
+                { id: 'financeiro', label: 'Financeiro', icon: <DollarSign className="w-4 h-4" /> },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
@@ -457,6 +465,99 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'financeiro' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-black text-white">Gestao Financeira da DApp</h2>
+
+                {/* Saldos da carteira DApp */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Wallet className="w-5 h-5 text-indigo-400" />
+                      <span className="text-slate-400 text-sm">ETH na DApp</span>
+                    </div>
+                    <div className="text-2xl font-black text-white">
+                      {ethBalance ? Number(ethBalance.formatted).toFixed(4) : '—'} ETH
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1 font-mono">
+                      {DAPP_WALLET.slice(0,6)}...{DAPP_WALLET.slice(-4)}
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <DollarSign className="w-5 h-5 text-emerald-400" />
+                      <span className="text-slate-400 text-sm">USDC na DApp</span>
+                    </div>
+                    <div className="text-2xl font-black text-white">
+                      {usdcBalance ? Number(usdcBalance.formatted).toFixed(2) : '—'} USDC
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1">Base Mainnet</div>
+                  </div>
+                  <div className="bg-slate-900/60 border border-indigo-500/30 rounded-2xl p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Zap className="w-5 h-5 text-indigo-400" />
+                      <span className="text-slate-400 text-sm">$NEURO na DApp</span>
+                    </div>
+                    <div className="text-2xl font-black text-indigo-400">
+                      {neuroBalance ? Number(neuroBalance.formatted).toLocaleString('pt-BR', {maximumFractionDigits: 0}) : '—'}
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1">Token de governanca</div>
+                  </div>
+                </div>
+
+                {/* Split info */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-white font-bold mb-4">Modelo de Split Automatico</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-black text-emerald-400">80%</div>
+                      <div className="text-slate-400 text-sm mt-1">Artista</div>
+                      <div className="text-slate-600 text-xs mt-1">Direto para a wallet do criador</div>
+                    </div>
+                    <div className="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4 text-center">
+                      <div className="text-3xl font-black text-indigo-400">20%</div>
+                      <div className="text-slate-400 text-sm mt-1">DApp</div>
+                      <div className="text-slate-600 text-xs mt-1">Tesouraria e fundo DeSci</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Obras tokenizadas e valor */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-white font-bold mb-4">Obras no Marketplace</h3>
+                  <div className="space-y-3">
+                    {submissions.filter(s => s.status === 'tokenized').map((s, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800 rounded-xl">
+                        <div>
+                          <div className="text-white font-semibold text-sm">{s.title}</div>
+                          <div className="text-slate-500 text-xs">por {s.artistName}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-emerald-400 font-bold text-sm">
+                            {s.moeda === 'BRL' ? 'R$' : s.moeda === 'USD' ? 'US$' : 'ETH'} {Number(s.valorObra || 0).toLocaleString('pt-BR')}
+                          </div>
+                          <div className="text-slate-500 text-xs">{s.totalFractions} fracoes</div>
+                        </div>
+                      </div>
+                    ))}
+                    {submissions.filter(s => s.status === 'tokenized').length === 0 && (
+                      <p className="text-slate-600 text-sm text-center py-4">Nenhuma obra tokenizada ainda.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Link basescan */}
+                <div className="text-center">
+                  <a href={`https://basescan.org/address/${DAPP_WALLET}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-sm font-semibold hover:border-indigo-500 transition-all">
+                    <Eye className="w-4 h-4" /> Ver carteira DApp no BaseScan
+                  </a>
+                </div>
+              </div>
+            )}
             )}
           </>
         )}
