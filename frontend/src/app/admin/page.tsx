@@ -115,6 +115,7 @@ export default function AdminPage() {
   const [newPost, setNewPost] = useState({ title: '', excerpt: '', content: '', category: 'Novidades NeuroArt', published: true })
   const [savingPost, setSavingPost] = useState(false)
   const [showNewPost, setShowNewPost] = useState(false)
+  const [editingPost, setEditingPost] = useState<any>(null)
   const [tokenizing, setTokenizing] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -600,6 +601,54 @@ export default function AdminPage() {
                     </div>
                   </div>
                 )}
+
+                {editingPost && (
+                  <div className="bg-slate-900/60 border border-amber-500/30 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-amber-400 font-bold">Editando: {editingPost.title}</h3>
+                    <input value={editingPost.title} onChange={e => setEditingPost({...editingPost, title: e.target.value})}
+                      placeholder="Titulo"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                    <input value={editingPost.excerpt} onChange={e => setEditingPost({...editingPost, excerpt: e.target.value})}
+                      placeholder="Resumo"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                    <select value={editingPost.category} onChange={e => setEditingPost({...editingPost, category: e.target.value})}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                      {["Arte & Criatividade", "Jiu-Jitsu & Neurociencia", "Neurodivergencia", "Natureza como Terapia", "Novidades NeuroArt", "Papers & Pesquisas"].map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <textarea value={editingPost.content} onChange={e => setEditingPost({...editingPost, content: e.target.value})}
+                      placeholder="Conteudo"
+                      rows={10}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 resize-none" />
+                    <div className="flex gap-3">
+                      <button onClick={() => setEditingPost(null)}
+                        className="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-600 transition-all">
+                        Cancelar
+                      </button>
+                      <button onClick={async () => {
+                        setSavingPost(true)
+                        await fetch(`/api/posts/${editingPost.slug}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            title: editingPost.title,
+                            excerpt: editingPost.excerpt,
+                            content: editingPost.content,
+                            category: editingPost.category,
+                          })
+                        })
+                        setPosts(prev => prev.map(p => p.slug === editingPost.slug ? editingPost : p))
+                        setEditingPost(null)
+                        setSavingPost(false)
+                      }} disabled={savingPost}
+                        className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-500 transition-all disabled:opacity-50">
+                        {savingPost ? 'Salvando...' : 'Salvar alteracoes'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {posts.length === 0 && <p className="text-slate-600 text-center py-8">Nenhum post publicado ainda.</p>}
                   {posts.map((post, i) => (
@@ -616,6 +665,12 @@ export default function AdminPage() {
                           className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition-all">
                           Ver
                         </a>
+                        <button onClick={() => {
+                          setEditingPost(post)
+                          setShowNewPost(false)
+                        }} className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 rounded-lg text-xs hover:bg-indigo-500/20 transition-all">
+                          Editar
+                        </button>
                         <button onClick={async () => {
                           if (!confirm('Apagar este post?')) return
                           await fetch(`/api/posts/${post.slug}`, { method: 'DELETE' })
