@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader } from 'lucide-react'
+import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
@@ -107,6 +107,7 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop'>('obras')
   const [tokenizing, setTokenizing] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -230,6 +231,22 @@ export default function AdminPage() {
     }
   }
 
+  // Calcula lista de artistas a partir das submissoes
+  const artistasMap = new Map<string, { name: string, wallet: string, obras: number, aprovadas: number, tokenizadas: number }>()
+  submissions.forEach(s => {
+    const key = s.artistWallet || s.artistName
+    const existing = artistasMap.get(key) || { name: s.artistName, wallet: s.artistWallet || '', obras: 0, aprovadas: 0, tokenizadas: 0 }
+    existing.obras++
+    if (s.status === 'approved') existing.aprovadas++
+    if (s.status === 'tokenized') existing.tokenizadas++
+    artistasMap.set(key, existing)
+  })
+  const artistas = Array.from(artistasMap.values())
+
+  // Calcula airdrop proporcional
+  const totalAprovadas = artistas.reduce((acc, a) => acc + a.tokenizadas, 0)
+  const AIRDROP_POOL = 250000
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 text-white">
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
@@ -255,6 +272,30 @@ export default function AdminPage() {
           </div>
         </div>
       </header>
+
+      {/* Abas de navegacao */}
+      {founderAccess && (
+        <div className="border-b border-slate-800 bg-slate-950/50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex gap-1">
+              {[
+                { id: 'obras', label: 'Obras', icon: <LayoutDashboard className="w-4 h-4" /> },
+                { id: 'artistas', label: 'Artistas', icon: <Users className="w-4 h-4" /> },
+                { id: 'airdrop', label: 'Airdrop', icon: <Gift className="w-4 h-4" /> },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
+                    activeTab === tab.id
+                      ? 'border-indigo-500 text-indigo-400'
+                      : 'border-transparent text-slate-500 hover:text-slate-300'
+                  }`}>
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-6 py-10">
         {!isConnected && (
@@ -310,19 +351,113 @@ export default function AdminPage() {
               ))}
             </div>
 
-            <div className="space-y-4">
-              {filtered.length === 0 && (
-                <div className="text-center py-16 text-slate-600">Nenhuma submissão nesta categoria.</div>
-              )}
-              {filtered.map(art => (
-                <SubmissionCard key={art.id} art={art}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onTokenize={handleTokenize}
-                  tokenizing={tokenizing}
-                />
-              ))}
-            </div>
+            {activeTab === 'obras' && (
+              <div className="space-y-4">
+                {filtered.length === 0 && (
+                  <div className="text-center py-16 text-slate-600">Nenhuma submissão nesta categoria.</div>
+                )}
+                {filtered.map(art => (
+                  <SubmissionCard key={art.id} art={art}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onTokenize={handleTokenize}
+                    tokenizing={tokenizing}
+                  />
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'artistas' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-black text-indigo-400">{artistas.length}</div>
+                    <div className="text-slate-500 text-sm mt-1">Artistas cadastrados</div>
+                  </div>
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-black text-emerald-400">{totalAprovadas}</div>
+                    <div className="text-slate-500 text-sm mt-1">Obras tokenizadas</div>
+                  </div>
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+                    <div className="text-3xl font-black text-purple-400">{AIRDROP_POOL.toLocaleString()}</div>
+                    <div className="text-slate-500 text-sm mt-1">NEURO no pool airdrop</div>
+                  </div>
+                </div>
+
+                {artistas.length === 0 ? (
+                  <div className="text-center py-16 text-slate-600">Nenhum artista cadastrado ainda.</div>
+                ) : (
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-900 border-b border-slate-800">
+                          <th className="text-left py-3 px-4 text-slate-500 font-medium">Artista</th>
+                          <th className="text-left py-3 px-4 text-slate-500 font-medium">Wallet</th>
+                          <th className="text-center py-3 px-4 text-slate-500 font-medium">Submetidas</th>
+                          <th className="text-center py-3 px-4 text-slate-500 font-medium">Tokenizadas</th>
+                          <th className="text-right py-3 px-4 text-slate-500 font-medium">NEURO Airdrop</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {artistas.map((a, i) => {
+                          const neuroAirdrop = totalAprovadas > 0
+                            ? Math.floor((a.tokenizadas / totalAprovadas) * AIRDROP_POOL)
+                            : 0
+                          return (
+                            <tr key={i} className="hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3 px-4 text-white font-semibold">{a.name}</td>
+                              <td className="py-3 px-4 text-slate-500 font-mono text-xs truncate max-w-32">
+                                {a.wallet ? `${a.wallet.slice(0,6)}...${a.wallet.slice(-4)}` : '—'}
+                              </td>
+                              <td className="py-3 px-4 text-center text-slate-300">{a.obras}</td>
+                              <td className="py-3 px-4 text-center text-indigo-400 font-bold">{a.tokenizadas}</td>
+                              <td className="py-3 px-4 text-right text-emerald-400 font-bold">
+                                {neuroAirdrop > 0 ? neuroAirdrop.toLocaleString() : '—'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'airdrop' && (
+              <div className="space-y-6">
+                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6">
+                  <h3 className="text-emerald-400 font-black text-xl mb-2">Programa de Airdrop</h3>
+                  <p className="text-slate-400 text-sm mb-4">
+                    250.000 $NEURO distribuidos proporcionalmente aos artistas com obras tokenizadas entre 06/05/2026 e 06/05/2027.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-black text-emerald-400">250.000</div>
+                      <div className="text-slate-500 text-xs mt-1">NEURO no pool</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-black text-indigo-400">{totalAprovadas}</div>
+                      <div className="text-slate-500 text-xs mt-1">Obras tokenizadas até agora</div>
+                    </div>
+                    <div className="bg-slate-900/60 rounded-xl p-4 text-center">
+                      <div className="text-2xl font-black text-purple-400">
+                        {totalAprovadas > 0 ? Math.floor(AIRDROP_POOL / totalAprovadas).toLocaleString() : '—'}
+                      </div>
+                      <div className="text-slate-500 text-xs mt-1">NEURO por obra tokenizada</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-white font-bold mb-1">Data de encerramento</h3>
+                  <p className="text-slate-400 text-sm">06 de maio de 2027 — distribuicao automatica via contrato inteligente.</p>
+                  <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <p className="text-amber-400 text-xs">Os valores acima sao estimativas baseadas nas obras tokenizadas ate o momento. O calculo final sera feito em 06/05/2027.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
