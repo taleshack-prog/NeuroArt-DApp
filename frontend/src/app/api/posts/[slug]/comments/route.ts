@@ -1,33 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { createClient } from "@supabase/supabase-js"
 
-const POSTS_FILE = path.join(process.cwd(), "data/posts.json")
-
-function getPosts() {
-  try {
-    return JSON.parse(fs.readFileSync(POSTS_FILE, "utf-8"))
-  } catch {
-    return []
-  }
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
   const body = await req.json()
-  const posts = getPosts()
-  const idx = posts.findIndex((p: any) => p.slug === params.slug)
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  
-  const comment = {
-    id: Date.now().toString(),
-    text: body.text,
-    author: body.author,
-    wallet: body.wallet,
-    createdAt: new Date().toISOString()
-  }
-  
-  posts[idx].comments = posts[idx].comments || []
-  posts[idx].comments.push(comment)
-  fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2))
-  return NextResponse.json(comment, { status: 201 })
+  const { data, error } = await supabase
+    .from("comments")
+    .insert([{
+      post_slug: params.slug,
+      text: body.text,
+      author: body.author,
+      wallet: body.wallet,
+    }])
+    .select()
+    .single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data, { status: 201 })
 }

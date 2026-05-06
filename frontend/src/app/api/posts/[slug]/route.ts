@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { createClient } from "@supabase/supabase-js"
 
-const POSTS_FILE = path.join(process.cwd(), "data/posts.json")
-
-function getPosts() {
-  try {
-    return JSON.parse(fs.readFileSync(POSTS_FILE, "utf-8"))
-  } catch {
-    return []
-  }
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function GET(_: NextRequest, { params }: { params: { slug: string } }) {
-  const posts = getPosts()
-  const post = posts.find((p: any) => p.slug === params.slug)
-  if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  return NextResponse.json(post)
+  const { data: post, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("slug", params.slug)
+    .single()
+  if (error) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+  const { data: comments } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("post_slug", params.slug)
+    .order("created_at", { ascending: true })
+
+  return NextResponse.json({ ...post, comments: comments || [] })
 }
