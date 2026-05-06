@@ -164,9 +164,9 @@ export default function WhitepaperPage() {
           <section id="airdrop">
             <h2 className="text-2xl font-black text-white mb-6 pb-3 border-b border-slate-800">5.1 Programa de Airdrop para Artistas</h2>
             <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-6 mb-6">
-              <h3 className="text-emerald-400 font-bold mb-3">500.000 $NEURO para a comunidade criativa</h3>
+              <h3 className="text-emerald-400 font-bold mb-3">250.000 $NEURO para a comunidade criativa</h3>
               <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                Para incentivar a participacao de artistas neurodivergentes no ecossistema, 500.000 $NEURO serao distribuidos proporcionalmente ao numero de obras aprovadas por cada artista durante o periodo de 12 meses.
+                Para incentivar a participacao de artistas neurodivergentes no ecossistema, 250.000 $NEURO serao distribuidos proporcionalmente ao numero de obras aprovadas por cada artista durante o periodo de 12 meses.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="bg-slate-900/60 rounded-xl p-4 text-center">
