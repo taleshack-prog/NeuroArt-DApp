@@ -186,7 +186,7 @@ export default function DashboardPage() {
       </div>
 
       <footer className="border-t border-slate-800 mt-10 py-8 text-center text-slate-500 text-sm">
-        <p>NeuroArt DApp © 2026 · Tales Hack & Prof. Alexandre de Souza Fortis · Base L2 · Florianópolis/SC</p>
+        <p>NeuroArt DApp © 2026 · Tales Hack & Prof. Alexandre de Souza Fortis · Base L2 · Porto Alegre/RS</p>
       </footer>
     </main>
   )

@@ -418,7 +418,7 @@ export default function Home() {
       </section>
 
       <footer className="relative z-10 border-t border-slate-800 mt-20 py-8 text-center text-slate-500 text-sm">
-        <p>NeuroArt DApp © 2026 · Tales Hack & Prof. Alexandre de Souza Fortis · Florianopolis/SC · Base L2</p>
+        <p>NeuroArt DApp © 2026 · Tales Hack & Prof. Alexandre de Souza Fortis · Porto Alegre/RS · Base L2</p>
       </footer>
     </main>
   )
