@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { getUSDtoBRL, getETHPrice, calcPrices } from '@/lib/exchange'
 import type { ArtworkSubmission } from '@/types'
+import { BuyButton } from '@/components/BuyButton'
 
 const NEURO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
@@ -75,13 +76,12 @@ function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: numb
             })()}
           </div>
           {isTokenized ? (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-bold hover:from-indigo-500 hover:to-purple-500 transition-all"
-            >
-              Adquirir Frações
-            </motion.button>
+            <BuyButton
+              obraId={art.id}
+              totalFractions={art.totalFractions || 100}
+              priceUSDC={11.21}
+              priceETH={0.003}
+            />
           ) : (
             <span className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl text-xs">
               Em aprovação
