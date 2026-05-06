@@ -4,7 +4,7 @@
     "artistName": "Tales Hack",
     "artistWallet": "0xE9eFC721405e1026B1ee91C07B2534e1796632A4",
     "title": "El Olvidao",
-    "description": "El Olvidao (Coleção Uruguay)\nEl Olvidao integra a coleção “Uruguay” , concebida após deslocamentos pela costa uruguaia — La Paloma, Punta del Este, Montevideo e La Esmeralda — onde o tempo atua como erosão e memória. Em pinus sobre base de ipê de demolição, a obra explora a tensão entre leveza e permanência: um corpo mais poroso encontra apoio num material denso, carregado de passado. A base, mantida “limpa” mas deliberadamente irregular, evidencia a remoção de matéria apodrecida como gesto de edição — cicatriz assumida, não defeito ocultado. Selada com cera de carnaúba, a peça preserva o veio e afirma a madeira como arquivo.",
+    "description": "El Olvidao (Cole\u00e7\u00e3o Uruguay)\nEl Olvidao integra a cole\u00e7\u00e3o \u201cUruguay\u201d , concebida ap\u00f3s deslocamentos pela costa uruguaia \u2014 La Paloma, Punta del Este, Montevideo e La Esmeralda \u2014 onde o tempo atua como eros\u00e3o e mem\u00f3ria. Em pinus sobre base de ip\u00ea de demoli\u00e7\u00e3o, a obra explora a tens\u00e3o entre leveza e perman\u00eancia: um corpo mais poroso encontra apoio num material denso, carregado de passado. A base, mantida \u201climpa\u201d mas deliberadamente irregular, evidencia a remo\u00e7\u00e3o de mat\u00e9ria apodrecida como gesto de edi\u00e7\u00e3o \u2014 cicatriz assumida, n\u00e3o defeito ocultado. Selada com cera de carna\u00faba, a pe\u00e7a preserva o veio e afirma a madeira como arquivo.",
     "neurotipo": "Outro",
     "estadoCognitivo": "Estado de Fluxo",
     "totalFractions": 100,
@@ -16,6 +16,9 @@
     "precoPorFracao": "R$ 64,50",
     "approvedAt": "2026-05-03T22:36:31.009Z",
     "ipfsCid": "QmZgufobdbj9JZnWwLALsrjTDYEybCg6MWQ8BNQPVGzELg",
-    "txHash": "0xff9a1e44f571934ce70aa09813346b96db742e835ee41291db1fc78c5a88057d"
+    "txHash": "0xff9a1e44f571934ce70aa09813346b96db742e835ee41291db1fc78c5a88057d",
+    "vaultAddress": "0xC7Ac2946fB70847b6531d93573d0b8d868fbFe05",
+    "network": "base-mainnet",
+    "chainId": 8453
   }
 ]
