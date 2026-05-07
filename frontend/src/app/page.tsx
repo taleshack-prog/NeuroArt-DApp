@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion"
 import { WalletButton } from "@/components/WalletButton"
 import { useAccount } from "wagmi"
-import { Brain, Zap, FlaskConical, ArrowRight, Upload, BookOpen, Microscope, Users } from "lucide-react"
+import { Brain, Zap, FlaskConical, ArrowRight, Upload, BookOpen, Microscope, Users, Menu, X } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import { isFounder } from "@/lib/constants"
@@ -112,9 +112,10 @@ export default function Home() {
   const { address, isConnected } = useAccount()
   const [mounted, setMounted] = useState(false)
   const [artists, setArtists] = useState<any[]>([])
+  const [mobileOpen, setMobileOpen] = useState(false)
   const { scrollY } = useScroll()
   const heroY = useTransform(scrollY, [0, 500], [0, -150])
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0])
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0])
 
   useEffect(() => {
     setMounted(true)
@@ -179,8 +180,34 @@ export default function Home() {
               </Link>
             )}
             <WalletButton />
+            <button onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 text-slate-400 hover:text-white transition-colors">
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Menu Mobile */}
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden border-t border-white/5 bg-slate-950/95 backdrop-blur-2xl px-6 py-4 space-y-1">
+            {NAV_LINKS.map(link => (
+              <Link key={link.href} href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center px-4 py-3 text-slate-300 hover:text-white text-sm font-medium transition-all hover:bg-white/5 rounded-xl">
+                {link.label}
+              </Link>
+            ))}
+            {founder && (
+              <Link href="/admin" onClick={() => setMobileOpen(false)}
+                className="flex items-center px-4 py-3 text-indigo-400 text-sm font-semibold hover:bg-indigo-500/10 rounded-xl transition-all">
+                Admin
+              </Link>
+            )}
+          </motion.div>
+        )}
       </header>
 
       {/* Hero */}
