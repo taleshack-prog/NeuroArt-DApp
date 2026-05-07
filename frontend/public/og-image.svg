@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  
+  <!-- Background neural dots -->
+  <circle cx="100" cy="100" r="2" fill="#6366f1" opacity="0.3"/>
+  <circle cx="300" cy="50" r="1.5" fill="#34d399" opacity="0.3"/>
+  <circle cx="1100" cy="150" r="2" fill="#6366f1" opacity="0.3"/>
+  <circle cx="1050" cy="500" r="1.5" fill="#34d399" opacity="0.3"/>
+  <circle cx="150" cy="500" r="2" fill="#818cf8" opacity="0.3"/>
+  <line x1="100" y1="100" x2="300" y2="50" stroke="#6366f1" stroke-width="0.5" opacity="0.2"/>
+  <line x1="1100" y1="150" x2="1050" y2="500" stroke="#34d399" stroke-width="0.5" opacity="0.2"/>
+
+  <!-- Cerebro grande centralizado a esquerda -->
+  <g transform="translate(200, 155) scale(3.5)">
+    <path d="M16 7 C12 7 8 9 7 13 C6 17 6 20 8 23 C10 26 13 28 16 28 C19 28 22 26 24 23 C26 20 26 17 25 13 C24 9 20 7 16 7Z"
+          fill="none" stroke="#6366f1" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="16" y1="7" x2="16" y2="28" stroke="#6366f1" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.3"/>
+    <path d="M7 15 C8 17 8 20 7 22" fill="none" stroke="#6366f1" stroke-width="0.8" opacity="0.4"/>
+    <path d="M25 15 C24 17 24 20 25 22" fill="none" stroke="#6366f1" stroke-width="0.8" opacity="0.4"/>
+    <circle cx="16" cy="17" r="2" fill="#34d399"/>
+    <circle cx="11" cy="13" r="1.2" fill="#34d399" opacity="0.8"/>
+    <circle cx="21" cy="13" r="1.2" fill="#34d399" opacity="0.8"/>
+    <circle cx="10" cy="20" r="1" fill="#818cf8" opacity="0.9"/>
+    <circle cx="22" cy="20" r="1" fill="#818cf8" opacity="0.9"/>
+    <line x1="16" y1="17" x2="11" y2="13" stroke="#34d399" stroke-width="0.6" opacity="0.6"/>
+    <line x1="16" y1="17" x2="21" y2="13" stroke="#34d399" stroke-width="0.6" opacity="0.6"/>
+    <line x1="16" y1="17" x2="10" y2="20" stroke="#818cf8" stroke-width="0.6" opacity="0.5"/>
+    <line x1="16" y1="17" x2="22" y2="20" stroke="#818cf8" stroke-width="0.6" opacity="0.5"/>
+  </g>
+
+  <!-- Textos -->
+  <text x="600" y="240" text-anchor="middle" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="white">NeuroArt DApp</text>
+  <text x="600" y="320" text-anchor="middle" font-family="system-ui, sans-serif" font-size="32" fill="#6366f1">Arte que financia ciência</text>
+  <text x="600" y="390" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#94a3b8">Tokenização fracionada · Base L2 · DeSci</text>
+
+  <!-- Tags -->
+  <rect x="390" y="430" width="160" height="44" rx="22" fill="#6366f1" opacity="0.15"/>
+  <rect x="390" y="430" width="160" height="44" rx="22" fill="none" stroke="#6366f1" stroke-width="1"/>
+  <text x="470" y="458" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#818cf8">$NEURO</text>
+
+  <rect x="570" y="430" width="180" height="44" rx="22" fill="#34d399" opacity="0.1"/>
+  <rect x="570" y="430" width="180" height="44" rx="22" fill="none" stroke="#34d399" stroke-width="1"/>
+  <text x="660" y="458" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#34d399">Neurodiversidade</text>
+
+  <rect x="770" y="430" width="140" height="44" rx="22" fill="#818cf8" opacity="0.1"/>
+  <rect x="770" y="430" width="140" height="44" rx="22" fill="none" stroke="#818cf8" stroke-width="1"/>
+  <text x="840" y="458" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#818cf8">Base L2</text>
+
+  <!-- URL -->
+  <text x="600" y="570" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#475569">neuro-art-d-app.vercel.app</text>
+</svg>
