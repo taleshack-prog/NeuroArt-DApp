@@ -56,9 +56,9 @@ contract NeuroPresale is Ownable, ReentrancyGuard {
         treasury = _treasury;
 
         // 10/06/2026 00:00 UTC
-        startTime = 1749513600;
+        startTime = 1781049600;
         // 20/10/2026 23:59 UTC
-        endTime = 1761004740;
+        endTime = 1792540740;
     }
 
     modifier presaleActive() {

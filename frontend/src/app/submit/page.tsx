@@ -359,6 +359,109 @@ export default function SubmitPage() {
             </div>
           )}
 
+          {/* Ficha do Artista */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h2 className="text-lg font-black text-white">Identidade do Artista</h2>
+            <p className="text-slate-500 text-sm">Dados obrigatorios para o contrato de deposito fiel.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">Email *</label>
+                <input value={formData.artistEmail || ""} onChange={e => setFormData({...formData, artistEmail: e.target.value})}
+                  type="email" placeholder="seu@email.com"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">CPF ou Passaporte *</label>
+                <input value={formData.artistCpfPassaporte || ""} onChange={e => setFormData({...formData, artistCpfPassaporte: e.target.value})}
+                  placeholder="000.000.000-00 ou Passaporte"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">Nacionalidade *</label>
+                <input value={formData.artistNacionalidade || "Brasileira"} onChange={e => setFormData({...formData, artistNacionalidade: e.target.value})}
+                  placeholder="Ex: Brasileira"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">Telefone</label>
+                <input value={formData.artistTelefone || ""} onChange={e => setFormData({...formData, artistTelefone: e.target.value})}
+                  placeholder="+55 51 99999-9999"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+            <div>
+              <label className="text-slate-400 text-sm mb-1 block">Endereco completo *</label>
+              <input value={formData.artistEndereco || ""} onChange={e => setFormData({...formData, artistEndereco: e.target.value})}
+                placeholder="Rua, numero, cidade, estado, pais"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label className="text-slate-400 text-sm mb-1 block">Instituicao / Atelie (opcional)</label>
+              <input value={formData.artistInstituicao || ""} onChange={e => setFormData({...formData, artistInstituicao: e.target.value})}
+                placeholder="Nome do atelie, galeria ou instituicao"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+
+          {/* Custodia da Obra */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h2 className="text-lg font-black text-white">Custodia da Obra</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">Localizacao atual da obra *</label>
+                <input value={formData.obraLocalizacao || ""} onChange={e => setFormData({...formData, obraLocalizacao: e.target.value})}
+                  placeholder="Ex: Atelie proprio, Porto Alegre/RS"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
+              </div>
+              <div>
+                <label className="text-slate-400 text-sm mb-1 block">Condicao da obra *</label>
+                <select value={formData.obraCondicao || "Otimo"} onChange={e => setFormData({...formData, obraCondicao: e.target.value})}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                  {["Otimo", "Bom", "Regular"].map(op => <option key={op} value={op}>{op}</option>)}
+                </select>
+              </div>
+            </div>
+            {formData.valorObra && formData.moeda === "BRL" && (() => {
+              const v = Number(formData.valorObra)
+              const usd = v / 5.75
+              const pct = v <= 12000 ? 0 : v <= 30000 ? 1 : v <= 60000 ? 2 : v <= 150000 ? 3 : v <= 300000 ? 4 : 5
+              const faixa = v <= 12000 ? "Sem caucao" : v <= 30000 ? "1% do valor" : v <= 60000 ? "2% + Proof of Reserve mensal" : v <= 150000 ? "3% + Seguro obrigatorio" : v <= 300000 ? "4% + Seguro + PoR quinzenal" : "5% + Seguro + Verificacao fisica"
+              const caucaoUSD = (usd * pct / 100)
+              return (
+                <div className={`rounded-xl p-4 border ${pct === 0 ? "bg-emerald-950/20 border-emerald-500/20" : "bg-amber-950/20 border-amber-500/20"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`font-bold text-sm ${pct === 0 ? "text-emerald-400" : "text-amber-400"}`}>Caucao de Custodia</span>
+                    <span className={`font-black text-lg ${pct === 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                      {pct === 0 ? "Isento" : `$${caucaoUSD.toFixed(2)} USDC`}
+                    </span>
+                  </div>
+                  <p className={`text-xs ${pct === 0 ? "text-emerald-600" : "text-amber-600"}`}>{faixa}</p>
+                  {pct > 0 && <p className="text-slate-500 text-xs mt-1">A caucao sera bloqueada no contrato e devolvida apos comprovacao de entrega fisica.</p>}
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Contrato de Deposito Fiel */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <h2 className="text-lg font-black text-white mb-4">Contrato de Deposito Fiel</h2>
+            <div className="bg-slate-950/60 rounded-xl p-4 text-slate-400 text-xs leading-relaxed mb-4 max-h-40 overflow-y-auto">
+              <p className="font-bold text-white mb-2">TERMO DE DEPOSITO FIEL E COMPROMISSO DE ENTREGA</p>
+              <p>Ao submeter esta obra, o artista assume a responsabilidade legal pela guarda e conservacao do bem fisico durante todo o periodo de tokenizacao.</p>
+              <p className="mt-2">O artista se compromete a: (1) manter a obra em perfeito estado de conservacao; (2) fornecer provas de custodia quando solicitado pelos fundadores; (3) realizar a entrega fisica ao detentor de 100% das fracoes mediante verificacao de identidade; (4) nao alienar, danificar ou extraviar a obra sob pena de banimento permanente do ecossistema e execucao judicial.</p>
+              <p className="mt-2">Este compromisso e selado por hash imutavel registrado na rede Base, vinculando a identidade digital do artista (SBT) ao ativo tokenizado.</p>
+              <p className="mt-2">Fundadores: Tales Hack e Prof. Alexandre de Souza Fortis — NeuroArt DApp, Porto Alegre/RS, Brasil.</p>
+            </div>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={formData.aceitaTermos || false}
+                onChange={e => setFormData({...formData, aceitaTermos: e.target.checked})}
+                className="mt-1 w-4 h-4 accent-indigo-500" />
+              <span className="text-slate-400 text-sm">
+                Li e aceito os termos do Contrato de Deposito Fiel. Entendo que este documento possui validade juridica como prova de propriedade e custodia da obra.
+              </span>
+            </label>
+          </div>
+
           <motion.button type="submit" disabled={submitting || !mounted || !isConnected}
             whileHover={{ scale: submitting ? 1 : 1.02 }}
             whileTap={{ scale: submitting ? 1 : 0.98 }}

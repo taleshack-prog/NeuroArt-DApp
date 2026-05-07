@@ -4,7 +4,7 @@ async function main() {
   const [deployer] = await ethers.getSigners()
   
   const NEURO_TOKEN = '0x323988FE0C241fe99E9FCa4dAea0D6e403D01D0B'
-  const PRESALE = '0x503b7a79FDc13B4Ee56944eef6dacdd5e0165D5B'
+  const PRESALE = '0x0B5B028b4d4F52350cAD8eD88203DE577fb087E0'
   const AMOUNT = ethers.parseEther('2000000')
 
   const neuro = await ethers.getContractAt('NeuroToken', NEURO_TOKEN)
