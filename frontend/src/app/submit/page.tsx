@@ -71,6 +71,15 @@ export default function SubmitPage() {
     imageFile: null,
     imagePreview: '',
     imageBase64: '',
+    artistEmail: '',
+    artistCpfPassaporte: '',
+    artistNacionalidade: 'Brasileira',
+    artistEndereco: '',
+    artistTelefone: '',
+    artistInstituicao: '',
+    obraLocalizacao: '',
+    obraCondicao: 'Otimo',
+    aceitaTermos: false,
   })
 
   // Preço por fração calculado automaticamente
