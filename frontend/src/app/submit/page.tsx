@@ -375,38 +375,38 @@ export default function SubmitPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">Email *</label>
-                <input value={formData.artistEmail || ""} onChange={e => setFormData({...formData, artistEmail: e.target.value})}
+                <input value={form.artistEmail || ""} onChange={e => setForm({...form, artistEmail: e.target.value})}
                   type="email" placeholder="seu@email.com"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">CPF ou Passaporte *</label>
-                <input value={formData.artistCpfPassaporte || ""} onChange={e => setFormData({...formData, artistCpfPassaporte: e.target.value})}
+                <input value={form.artistCpfPassaporte || ""} onChange={e => setForm({...form, artistCpfPassaporte: e.target.value})}
                   placeholder="000.000.000-00 ou Passaporte"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">Nacionalidade *</label>
-                <input value={formData.artistNacionalidade || "Brasileira"} onChange={e => setFormData({...formData, artistNacionalidade: e.target.value})}
+                <input value={form.artistNacionalidade || "Brasileira"} onChange={e => setForm({...form, artistNacionalidade: e.target.value})}
                   placeholder="Ex: Brasileira"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">Telefone</label>
-                <input value={formData.artistTelefone || ""} onChange={e => setFormData({...formData, artistTelefone: e.target.value})}
+                <input value={form.artistTelefone || ""} onChange={e => setForm({...form, artistTelefone: e.target.value})}
                   placeholder="+55 51 99999-9999"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
             </div>
             <div>
               <label className="text-slate-400 text-sm mb-1 block">Endereco completo *</label>
-              <input value={formData.artistEndereco || ""} onChange={e => setFormData({...formData, artistEndereco: e.target.value})}
+              <input value={form.artistEndereco || ""} onChange={e => setForm({...form, artistEndereco: e.target.value})}
                 placeholder="Rua, numero, cidade, estado, pais"
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
             </div>
             <div>
               <label className="text-slate-400 text-sm mb-1 block">Instituicao / Atelie (opcional)</label>
-              <input value={formData.artistInstituicao || ""} onChange={e => setFormData({...formData, artistInstituicao: e.target.value})}
+              <input value={form.artistInstituicao || ""} onChange={e => setForm({...form, artistInstituicao: e.target.value})}
                 placeholder="Nome do atelie, galeria ou instituicao"
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
             </div>
@@ -418,20 +418,20 @@ export default function SubmitPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">Localizacao atual da obra *</label>
-                <input value={formData.obraLocalizacao || ""} onChange={e => setFormData({...formData, obraLocalizacao: e.target.value})}
+                <input value={form.obraLocalizacao || ""} onChange={e => setForm({...form, obraLocalizacao: e.target.value})}
                   placeholder="Ex: Atelie proprio, Porto Alegre/RS"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500" />
               </div>
               <div>
                 <label className="text-slate-400 text-sm mb-1 block">Condicao da obra *</label>
-                <select value={formData.obraCondicao || "Otimo"} onChange={e => setFormData({...formData, obraCondicao: e.target.value})}
+                <select value={form.obraCondicao || "Otimo"} onChange={e => setForm({...form, obraCondicao: e.target.value})}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
                   {["Otimo", "Bom", "Regular"].map(op => <option key={op} value={op}>{op}</option>)}
                 </select>
               </div>
             </div>
-            {formData.valorObra && formData.moeda === "BRL" && (() => {
-              const v = Number(formData.valorObra)
+            {form.valorObra && form.moeda === "BRL" && (() => {
+              const v = Number(form.valorObra)
               const usd = v / 5.75
               const pct = v <= 12000 ? 0 : v <= 30000 ? 1 : v <= 60000 ? 2 : v <= 150000 ? 3 : v <= 300000 ? 4 : 5
               const faixa = v <= 12000 ? "Sem caucao" : v <= 30000 ? "1% do valor" : v <= 60000 ? "2% + Proof of Reserve mensal" : v <= 150000 ? "3% + Seguro obrigatorio" : v <= 300000 ? "4% + Seguro + PoR quinzenal" : "5% + Seguro + Verificacao fisica"
@@ -462,8 +462,8 @@ export default function SubmitPage() {
               <p className="mt-2">Fundadores: Tales Hack e Prof. Alexandre de Souza Fortis — NeuroArt DApp, Porto Alegre/RS, Brasil.</p>
             </div>
             <label className="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" checked={formData.aceitaTermos || false}
-                onChange={e => setFormData({...formData, aceitaTermos: e.target.checked})}
+              <input type="checkbox" checked={form.aceitaTermos || false}
+                onChange={e => setForm({...form, aceitaTermos: e.target.checked})}
                 className="mt-1 w-4 h-4 accent-indigo-500" />
               <span className="text-slate-400 text-sm">
                 Li e aceito os termos do Contrato de Deposito Fiel. Entendo que este documento possui validade juridica como prova de propriedade e custodia da obra.
