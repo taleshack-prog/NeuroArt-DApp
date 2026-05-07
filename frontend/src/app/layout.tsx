@@ -6,6 +6,7 @@ import { Providers } from '@/lib/providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  icons: { icon: "/favicon.svg", apple: "/favicon.svg" },
   title: 'NeuroArt DApp',
   description: 'Tokenização de Arte Neurodiversa na Rede Base',
 }
