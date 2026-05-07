@@ -10,6 +10,7 @@ import Link from 'next/link'
 type Moeda = 'BRL' | 'USD' | 'ETH'
 
 type FormData = {
+  // Obra
   artistName: string
   title: string
   description: string
@@ -20,6 +21,27 @@ type FormData = {
   imageFile: File | null
   imagePreview: string
   imageBase64: string
+  // Identidade do artista
+  artistEmail: string
+  artistCpfPassaporte: string
+  artistNacionalidade: string
+  artistEndereco: string
+  artistTelefone: string
+  artistInstituicao: string
+  // Custódia
+  obraLocalizacao: string
+  obraCondicao: string
+  aceitaTermos: boolean
+}
+
+function calcCaucao(valorBRL: number): { pct: number; valorUSD: number; faixa: string } {
+  const USD = valorBRL / 5.75
+  if (valorBRL <= 12000) return { pct: 0, valorUSD: 0, faixa: "Sem caucao" }
+  if (valorBRL <= 30000) return { pct: 1, valorUSD: USD * 0.01, faixa: "1% do valor" }
+  if (valorBRL <= 60000) return { pct: 2, valorUSD: USD * 0.02, faixa: "2% + Proof of Reserve mensal" }
+  if (valorBRL <= 150000) return { pct: 3, valorUSD: USD * 0.03, faixa: "3% + Seguro obrigatorio" }
+  if (valorBRL <= 300000) return { pct: 4, valorUSD: USD * 0.04, faixa: "4% + Seguro + PoR quinzenal" }
+  return { pct: 5, valorUSD: USD * 0.05, faixa: "5% + Seguro + Verificacao fisica" }
 }
 
 const ESTADOS = ['Hiperfoco', 'Estado de Fluxo', 'Divergência Criativa', 'Monofoco', 'Expansão Cognitiva']
