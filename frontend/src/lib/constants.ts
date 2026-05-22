@@ -1,6 +1,7 @@
 // Endereços dos fundadores — únicos autorizados no painel admin
 export const FOUNDERS = [
   '0xE9eFC721405e1026B1ee91C07B2534e1796632A4', // Tales Hack
+  '0x59a42f0b0a6c5e0ab24c09fa4101d2df85d3e391', // Prof. Alexandre de Souza Fortis
 ] as const
 
 export type FounderAddress = typeof FOUNDERS[number]
