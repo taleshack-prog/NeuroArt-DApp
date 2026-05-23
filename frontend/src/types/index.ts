@@ -6,7 +6,7 @@ export type ArtworkSubmission = {
   artistWallet: string
   title: string
   description: string
-  neurotipo: string
+  neurotipo?: string
   estadoCognitivo: string
   totalFractions: number
   imageUrl: string
