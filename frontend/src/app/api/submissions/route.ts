@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     const { artistName, artistWallet, title, description, estadoCognitivo, totalFractions, imageBase64 } = body
 
     if (!artistName || !artistWallet || !title || !description || !estadoCognitivo || !totalFractions) {
-      return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
+      const missing = { artistName: !artistName, artistWallet: !artistWallet, title: !title, description: !description, estadoCognitivo: !estadoCognitivo, totalFractions: !totalFractions }
+      return NextResponse.json({ error: 'Campos faltando', missing }, { status: 400 })
     }
 
     const submissions = readDB()
