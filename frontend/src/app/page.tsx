@@ -105,6 +105,7 @@ const NAV_LINKS = [
   { href: "/research", label: "Pesquisa" },
   { href: "/blog", label: "Blog" },
   { href: "/presale", label: "Pre-venda" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/research/approved", label: "DeSci" },
 ]
 
