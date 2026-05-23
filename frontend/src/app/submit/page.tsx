@@ -91,7 +91,7 @@ export default function SubmitPage() {
     // preco correto: valor total dividido pelo numero de fracoes
     const moeda = MOEDAS.find(m => m.value === form.moeda)
     if (form.moeda === 'ETH') return `${preco.toFixed(6)} ETH`
-    return `${moeda?.symbol} ${preco.toFixed(4)}`
+    return `${moeda?.symbol} ${preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
   }
 
   function handleInput(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
