@@ -102,6 +102,14 @@ export default function MarketplacePage() {
 
   const handleSwap = async () => {
     if (!isConnected || !amount || !address) return
+    // Forca reconexao MetaMask antes de assinar
+    try {
+      await (window as any).ethereum.request({ method: "eth_requestAccounts" })
+    } catch (e) {
+      console.error("MetaMask nao conectado", e)
+      setStep("error")
+      return
+    }
     setStep("approving")
     try {
       const amountIn = parseEther(amount)

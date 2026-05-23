@@ -27,9 +27,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { artistName, artistWallet, title, description, neurotipo, estadoCognitivo, totalFractions, imageBase64 } = body
+    const { artistName, artistWallet, title, description, estadoCognitivo, totalFractions, imageBase64 } = body
 
-    if (!artistName || !artistWallet || !title || !description || !neurotipo || !estadoCognitivo || !totalFractions) {
+    if (!artistName || !artistWallet || !title || !description || !estadoCognitivo || !totalFractions) {
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
     }
 

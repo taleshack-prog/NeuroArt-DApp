@@ -63,6 +63,12 @@ export function BuyButton({ obraId, totalFractions, priceUSDC, priceETH }: BuyBu
 
   const handleBuy = async () => {
     if (!isConnected) return
+    try {
+      await (window as any).ethereum.request({ method: "eth_requestAccounts" })
+    } catch (e) {
+      setStep("error")
+      return
+    }
     setStep("approving")
     try {
       const obraIdBig = BigInt(obraId)
