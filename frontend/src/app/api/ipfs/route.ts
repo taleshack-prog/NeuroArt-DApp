@@ -1,3 +1,5 @@
+export const maxDuration = 60
+
 import { NextRequest, NextResponse } from 'next/server'
 
 const PINATA_JWT = process.env.PINATA_JWT

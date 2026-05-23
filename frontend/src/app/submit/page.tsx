@@ -113,6 +113,28 @@ export default function SubmitPage() {
     setError('')
   }
 
+  // Comprime imagem para max 800px e qualidade 0.7
+  async function compressImage(base64: string): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        const MAX = 800
+        let w = img.width, h = img.height
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+          else { w = Math.round(w * MAX / h); h = MAX }
+        }
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        ctx?.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL("image/jpeg", 0.7))
+      }
+      img.src = base64
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!mounted || !isConnected || !address) { setError('Conecte sua carteira primeiro.'); return }
@@ -126,6 +148,7 @@ export default function SubmitPage() {
     setError('')
 
     try {
+      const compressedImage = form.imageBase64 ? await compressImage(form.imageBase64) : ""
       const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,7 +162,7 @@ export default function SubmitPage() {
           valorObra: form.valorObra,
           moeda: form.moeda,
           precoPorFracao: precoPorFracao(),
-          imageBase64: form.imageBase64,
+          imageBase64: compressedImage,
         }),
       })
 
