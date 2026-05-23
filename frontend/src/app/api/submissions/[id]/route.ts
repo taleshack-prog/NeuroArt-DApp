@@ -1,41 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
-import type { ArtworkSubmission } from '@/types'
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 
-const DB_PATH = join(process.cwd(), 'data', 'submissions.json')
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  )
+  const body = await req.json()
+  const update: any = {}
 
-function readDB(): ArtworkSubmission[] {
-  try {
-    return JSON.parse(readFileSync(DB_PATH, 'utf-8'))
-  } catch {
-    return []
-  }
-}
+  if (body.status) update.status = body.status
+  if (body.approvedAt) update.approved_at = body.approvedAt
+  if (body.txHash) update.tx_hash = body.txHash
+  if (body.ipfsCid) update.ipfs_cid = body.ipfsCid
+  if (body.imageUrl) update.image_url = body.imageUrl
+  if (body.vaultAddress) update.vault_address = body.vaultAddress
 
-function writeDB(data: ArtworkSubmission[]) {
-  writeFileSync(DB_PATH, JSON.stringify(data, null, 2))
-}
+  const { data, error } = await supabase
+    .from("submissions")
+    .update(update)
+    .eq("id", params.id)
+    .select()
+    .single()
 
-// PATCH /api/submissions/[id] — atualiza status
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await req.json()
-    const submissions = readDB()
-    const index = submissions.findIndex(s => s.id === params.id)
-
-    if (index === -1) {
-      return NextResponse.json({ error: 'Submissão não encontrada' }, { status: 404 })
-    }
-
-    submissions[index] = { ...submissions[index], ...body }
-    writeDB(submissions)
-
-    return NextResponse.json(submissions[index])
-  } catch {
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
 }
