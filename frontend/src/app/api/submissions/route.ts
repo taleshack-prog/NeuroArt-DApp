@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
       artistWallet,
       title,
       description,
-      neurotipo,
       estadoCognitivo,
       totalFractions: Number(totalFractions),
       imageUrl: imageBase64 || '',
