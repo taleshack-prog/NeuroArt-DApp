@@ -15,7 +15,13 @@ export async function GET(req: NextRequest) {
 
   const res = await fetch(fetchUrl)
   const buffer = await res.arrayBuffer()
-  const contentType = res.headers.get("content-type") || "image/jpeg"
+  let contentType = res.headers.get("content-type") || "image/jpeg"
+  
+  // Forca image/jpeg quando octet-stream (Pinata nao define o tipo corretamente)
+  if (contentType === "application/octet-stream") {
+    contentType = "image/jpeg"
+  }
+
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": contentType,
