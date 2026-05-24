@@ -24,7 +24,13 @@ function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: numb
     >
       <div className="relative">
         <img
-          src={art.imageUrl || `https://placehold.co/500x500/0f172a/6366f1?text=${encodeURIComponent(art.title)}`}
+          src={
+              art.imageUrl
+                ? art.imageUrl.startsWith('http')
+                  ? `/api/image?url=${encodeURIComponent(art.imageUrl)}`
+                  : art.imageUrl
+                : `https://placehold.co/500x500/0f172a/6366f1?text=${encodeURIComponent(art.title)}`
+            }
           alt={art.title}
           className="w-full object-contain group-hover:scale-105 transition-transform duration-500"
         />
