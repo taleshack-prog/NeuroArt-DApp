@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import '@rainbow-me/rainbowkit/styles.css'
 import { Providers } from '@/lib/providers'
+import { AIAssistant } from '@/components/AIAssistant'
 
 const inter = Inter({ subsets: ['latin'] })
 
