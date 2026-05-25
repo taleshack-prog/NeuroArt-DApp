@@ -274,7 +274,7 @@ export default function SubmitPage() {
             <label className={`block w-full border-2 border-dashed rounded-xl cursor-pointer transition-all ${form.imagePreview ? 'border-indigo-500/50' : 'border-slate-700 hover:border-indigo-500/40'}`}>
               <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
               {form.imagePreview ? (
-                <img src={form.imagePreview} alt="Preview" className="w-full h-64 object-cover rounded-xl" />
+                <img src={form.imagePreview} alt="Preview" className="w-full h-64 object-contain rounded-xl bg-slate-950/40" />
               ) : (
                 <div className="py-16 text-center">
                   <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
