@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
-import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2, Microscope } from 'lucide-react'
+import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2, Microscope, Activity, RefreshCw, AlertTriangle, Wifi } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
@@ -107,7 +107,7 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
-  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog' | 'pesquisas'>('obras')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog' | 'pesquisas' | 'health'>('obras')
   const DAPP_WALLET = '0xE9eFC721405e1026B1ee91C07B2534e1796632A4' as `0x${string}`
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`
   const NEURO_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0') as `0x${string}`
@@ -119,6 +119,35 @@ export default function AdminPage() {
   const [proposals, setProposals] = useState<any[]>([])
   const [tokenizing, setTokenizing] = useState<string | null>(null)
   const [uploadStatus, setUploadStatus] = useState('')
+
+  // ── Health System ──────────────────────────────────────
+  type ServiceStatus = 'healthy' | 'degraded' | 'down'
+  interface ServiceCheck { name: string; status: ServiceStatus; latency: number; message: string; checkedAt: string }
+  interface HealthReport { status: ServiceStatus; version: string; timestamp: string; services: ServiceCheck[] }
+  const [healthData, setHealthData] = useState<HealthReport | null>(null)
+  const [healthLoading, setHealthLoading] = useState(false)
+  const [healthLastRefresh, setHealthLastRefresh] = useState<Date | null>(null)
+
+  async function fetchHealth() {
+    setHealthLoading(true)
+    try {
+      const res = await fetch('/api/health')
+      const data: HealthReport = await res.json()
+      setHealthData(data)
+      setHealthLastRefresh(new Date())
+    } catch {
+      setHealthData(null)
+    } finally {
+      setHealthLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab !== 'health') return
+    fetchHealth()
+    const id = setInterval(fetchHealth, 60_000)
+    return () => clearInterval(id)
+  }, [activeTab])
 
   const { writeContract, data: txHash } = useWriteContract()
   const { data: ethBalance } = useBalance({ address: DAPP_WALLET })
@@ -305,6 +334,7 @@ export default function AdminPage() {
                 { id: 'financeiro', label: 'Financeiro', icon: <DollarSign className="w-4 h-4" /> },
                 { id: 'blog', label: 'Blog', icon: <PenLine className="w-4 h-4" /> },
                 { id: 'pesquisas', label: 'Pesquisas', icon: <Microscope className="w-4 h-4" /> },
+                { id: 'health',   label: 'Health',    icon: <Activity className="w-4 h-4" /> },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
@@ -687,6 +717,91 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'health' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                      <Activity className="w-6 h-6 text-emerald-400" /> Health Monitor
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-1">Status em tempo real de todos os serviços críticos</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {healthLastRefresh && (
+                      <span className="text-slate-600 text-xs">Atualizado {healthLastRefresh.toLocaleTimeString('pt-BR')}</span>
+                    )}
+                    <button onClick={fetchHealth} disabled={healthLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-slate-300 hover:border-indigo-500 hover:text-white transition-all disabled:opacity-50">
+                      <RefreshCw className={`w-4 h-4 ${healthLoading ? 'animate-spin' : ''}`} /> Atualizar
+                    </button>
+                  </div>
+                </div>
+
+                {healthData && (
+                  <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl border font-semibold ${
+                    healthData.status === 'healthy'  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                    healthData.status === 'degraded' ? 'bg-amber-500/10  border-amber-500/30  text-amber-400'   :
+                                                       'bg-red-500/10    border-red-500/30    text-red-400'}`}>
+                    {healthData.status === 'healthy'  && <CheckCircle className="w-5 h-5" />}
+                    {healthData.status === 'degraded' && <AlertTriangle className="w-5 h-5" />}
+                    {healthData.status === 'down'     && <XCircle className="w-5 h-5" />}
+                    <span>{healthData.status === 'healthy' ? 'Todos os serviços operacionais' : healthData.status === 'degraded' ? 'Um ou mais serviços com desempenho reduzido' : 'Falha crítica detectada'}</span>
+                    <span className="ml-auto text-xs font-normal opacity-70">{new Date(healthData.timestamp).toLocaleString('pt-BR')}</span>
+                  </div>
+                )}
+
+                {healthLoading && !healthData && (
+                  <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
+                    <Loader className="w-5 h-5 animate-spin" /> Verificando serviços...
+                  </div>
+                )}
+
+                {healthData && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {healthData.services.map((svc) => (
+                      <div key={svc.name} className={`bg-slate-900/60 border rounded-2xl p-5 transition-all ${
+                        svc.status === 'healthy'  ? 'border-emerald-500/30' :
+                        svc.status === 'degraded' ? 'border-amber-500/30'  : 'border-red-500/30'}`}>
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Wifi className={`w-4 h-4 ${svc.status === 'healthy' ? 'text-emerald-400' : svc.status === 'degraded' ? 'text-amber-400' : 'text-red-400'}`} />
+                            <span className="font-semibold text-white text-sm">{svc.name}</span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                            svc.status === 'healthy'  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
+                            svc.status === 'degraded' ? 'bg-amber-500/10  border-amber-500/30  text-amber-400'   :
+                                                        'bg-red-500/10    border-red-500/30    text-red-400'}`}>
+                            {svc.status === 'healthy' ? 'OK' : svc.status === 'degraded' ? 'Degraded' : 'Down'}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mb-3 truncate">{svc.message}</p>
+                        <div className="flex items-center gap-4 text-xs text-slate-600">
+                          {svc.latency > 0 && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.latency} ms</span>}
+                          <span className="ml-auto">{new Date(svc.checkedAt).toLocaleTimeString('pt-BR')}</span>
+                        </div>
+                        {svc.latency > 0 && (
+                          <div className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${svc.latency < 500 ? 'bg-emerald-500' : svc.latency < 1500 ? 'bg-amber-500' : 'bg-red-500'}`}
+                              style={{ width: `${Math.min((svc.latency / 3000) * 100, 100)}%` }} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
+                  <p className="text-slate-500 text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-indigo-400" /> Endpoint público para integração
+                  </p>
+                  <code className="text-indigo-300 text-xs bg-slate-950/60 px-3 py-2 rounded-xl block font-mono break-all">
+                    GET https://neuroart-dapp.vercel.app/api/health
+                  </code>
+                  <p className="text-slate-600 text-xs mt-2">Retorna JSON com status global e por serviço. Auto-refresh a cada 60s.</p>
                 </div>
               </div>
             )}
