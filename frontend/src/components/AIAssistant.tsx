@@ -58,11 +58,14 @@ export function AIAssistant() {
         onClick={() => setOpen(!open)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center hover:shadow-indigo-500/60 transition-shadow"
+        type="button"
+        aria-label={open ? "Fechar assistente NeuroArt" : "Abrir assistente NeuroArt"}
+        aria-expanded={open}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center hover:shadow-indigo-500/60 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
       >
-        {open ? <X className="w-7 h-7 text-white" /> : <Brain className="w-7 h-7 text-white" />}
+        {open ? <X className="w-7 h-7 text-white" aria-hidden="true" /> : <Brain className="w-7 h-7 text-white" aria-hidden="true" />}
         {!open && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-pulse" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full motion-safe:animate-pulse" aria-hidden="true" />
         )}
       </motion.button>
 
