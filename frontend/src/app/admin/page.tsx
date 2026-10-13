@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
-import { useAccount, useWriteContract, useBalance, useChainId, usePublicClient, useSwitchChain } from 'wagmi'
+import { useAccount, useWriteContract, useBalance, useChainId, usePublicClient, useSwitchChain, useSignMessage } from 'wagmi'
 import { base } from 'wagmi/chains'
 import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2, Microscope, Activity, RefreshCw, AlertTriangle, Wifi } from 'lucide-react'
 import Link from 'next/link'
 import { isFounder } from '@/lib/constants'
 import { tokenizeAndList, getVaultV2, suggestSymbol, validSymbol } from '@/lib/tokenizeV2'
 import { friendlyError } from '@/lib/marketplaceV2'
+import { buildLoginMessage, SESSION_HOURS } from '@/lib/adminLoginMessage'
 import type { ArtworkSubmission } from '@/types'
 import { PriceManagerV2 } from '@/components/admin/PriceManagerV2'
 
@@ -164,6 +165,63 @@ export default function AdminPage() {
 
   const founderAccess = mounted && isConnected && address && isFounder(address)
 
+  // ── Sessão do admin (assinatura da carteira; o servidor só aceita alterações de quem assinou) ──
+  const { signMessageAsync } = useSignMessage()
+  const [session, setSession] = useState<'checking' | 'none' | 'ok'>('checking')
+  const [signingIn, setSigningIn] = useState(false)
+  const [sessionError, setSessionError] = useState('')
+
+  useEffect(() => {
+    if (!founderAccess || !address) return
+    setSession('checking')
+    fetch('/api/admin/session', { cache: 'no-store' })
+      .then(async r => {
+        const data = r.ok ? await r.json() : null
+        setSession(data?.address?.toLowerCase() === address.toLowerCase() ? 'ok' : 'none')
+      })
+      .catch(() => setSession('none'))
+  }, [founderAccess, address])
+
+  async function signIn() {
+    if (!address) return
+    setSigningIn(true)
+    setSessionError('')
+    try {
+      const now = new Date()
+      const message = buildLoginMessage(address, window.location.host, now, new Date(now.getTime() + SESSION_HOURS * 3600 * 1000))
+      const signature = await signMessageAsync({ message })
+      const res = await fetch('/api/admin/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, signature }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `HTTP ${res.status}`)
+      setSession('ok')
+    } catch (e) {
+      setSessionError(friendlyError(e))
+    } finally {
+      setSigningIn(false)
+    }
+  }
+
+  async function signOut() {
+    await fetch('/api/admin/session', { method: 'DELETE' }).catch(() => {})
+    setSession('none')
+  }
+
+  /** fetch para rotas protegidas: lança erro se falhar e pede novo login se a sessão expirou */
+  async function adminFetch(url: string, init: RequestInit) {
+    const res = await fetch(url, init)
+    if (res.status === 401) {
+      setSession('none')
+      throw new Error('Sua sessão do admin expirou. Clique em "Entrar no admin" e assine de novo.')
+    }
+    if (!res.ok) throw new Error(`Falha ao gravar (HTTP ${res.status})`)
+    return res
+  }
+
+  const adminReady = founderAccess && session === 'ok'
+
   useEffect(() => {
     fetch('/api/submissions')
       .then(r => r.json())
@@ -188,36 +246,23 @@ export default function AdminPage() {
     rejected:  submissions.filter(s => s.status === 'rejected').length,
   }
 
-  function handleApprove(id: string) {
-    setSubmissions(prev => prev.map(s =>
-      s.id === id ? { ...s, status: 'approved', approvedAt: new Date().toISOString() } : s
-    ))
-    fetch(`/api/submissions/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'approved', approvedAt: new Date().toISOString() }),
-    })
+  async function handleApprove(id: string) {
+    try { await patchSubmission(id, { status: 'approved', approvedAt: new Date().toISOString() }) }
+    catch (e) { window.alert(friendlyError(e)) }
   }
 
-  function handleReject(id: string) {
-    setSubmissions(prev => prev.map(s =>
-      s.id === id ? { ...s, status: 'rejected' } : s
-    ))
-    fetch(`/api/submissions/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'rejected' }),
-    })
+  async function handleReject(id: string) {
+    try { await patchSubmission(id, { status: 'rejected' }) }
+    catch (e) { window.alert(friendlyError(e)) }
   }
 
   /** Grava campos da obra no banco e na tela; lança erro se a API falhar */
   async function patchSubmission(id: string, fields: Partial<ArtworkSubmission>) {
-    const res = await fetch(`/api/submissions/${id}`, {
+    await adminFetch(`/api/submissions/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fields),
     })
-    if (!res.ok) throw new Error(`Falha ao gravar no banco (HTTP ${res.status})`)
     setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s))
   }
 
@@ -258,7 +303,7 @@ export default function AdminPage() {
       let ipfsHash = art.ipfsCid ?? ''
       if (!hasVault && !ipfsHash) {
         setUploadStatus('Enviando imagem e metadados para o IPFS…')
-        const ipfsRes = await fetch('/api/ipfs', {
+        const ipfsRes = await adminFetch('/api/ipfs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -278,7 +323,6 @@ export default function AdminPage() {
           }),
         })
         const ipfsData = await ipfsRes.json()
-        if (!ipfsRes.ok) throw new Error('Erro no IPFS: ' + ipfsData.error)
         await patchSubmission(art.id, { ipfsCid: ipfsData.metadataCid, imageUrl: ipfsData.imageUrl })
         ipfsHash = ipfsData.ipfsHash ?? ipfsData.metadataCid
       }
@@ -367,13 +411,19 @@ export default function AdminPage() {
                 <CheckCircle className="w-3 h-3" /> Fundador verificado
               </span>
             )}
+            {adminReady && (
+              <button type="button" onClick={signOut}
+                className="px-3 py-1 rounded-full border border-slate-700 text-slate-300 text-xs font-semibold hover:border-slate-500">
+                Sair
+              </button>
+            )}
             <WalletButton />
           </div>
         </div>
       </header>
 
       {/* Abas de navegacao */}
-      {founderAccess && (
+      {adminReady && (
         <div className="border-b border-slate-800 bg-slate-950/50">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex gap-1">
@@ -420,7 +470,23 @@ export default function AdminPage() {
           </div>
         )}
 
-        {founderAccess && (
+        {founderAccess && session !== 'ok' && (
+          <div className="text-center py-24 max-w-xl mx-auto">
+            <Shield className="w-16 h-16 text-indigo-400/60 mx-auto mb-4" />
+            <h2 className="text-2xl font-black text-white mb-2">Entrar no admin</h2>
+            <p className="text-slate-300 mb-6">
+              Para alterar obras, posts e pesquisas, confirme que você controla esta carteira assinando uma mensagem na MetaMask.
+              Não envia transação nem custa gás. A sessão vale {SESSION_HOURS}h neste navegador.
+            </p>
+            <button type="button" onClick={signIn} disabled={signingIn || session === 'checking'}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-500 transition-all disabled:opacity-50">
+              {session === 'checking' ? 'Verificando sessão…' : signingIn ? 'Assine na MetaMask…' : 'Entrar no admin'}
+            </button>
+            {sessionError && <p role="alert" className="text-red-300 text-sm mt-4">{sessionError}</p>}
+          </div>
+        )}
+
+        {adminReady && (
           <>
             {uploadStatus && (
               <div className="mb-4 px-4 py-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-300 text-sm flex items-center gap-2">
@@ -680,16 +746,21 @@ export default function AdminPage() {
                       </button>
                       <button onClick={async () => {
                         setSavingPost(true)
-                        const res = await fetch('/api/posts', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ ...newPost, author: 'Tales Hack', authorWallet: address })
-                        })
-                        const post = await res.json()
-                        setPosts(prev => [post, ...prev])
-                        setNewPost({ title: '', excerpt: '', content: '', category: 'Novidades NeuroArt', published: true })
-                        setShowNewPost(false)
-                        setSavingPost(false)
+                        try {
+                          const res = await adminFetch('/api/posts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...newPost, author: 'Tales Hack', authorWallet: address })
+                          })
+                          const post = await res.json()
+                          setPosts(prev => [post, ...prev])
+                          setNewPost({ title: '', excerpt: '', content: '', category: 'Novidades NeuroArt', published: true })
+                          setShowNewPost(false)
+                        } catch (e) {
+                          window.alert(friendlyError(e))
+                        } finally {
+                          setSavingPost(false)
+                        }
                       }} disabled={savingPost || !newPost.title || !newPost.content}
                         className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-500 transition-all disabled:opacity-50">
                         {savingPost ? 'Publicando...' : 'Publicar'}
@@ -724,19 +795,24 @@ export default function AdminPage() {
                       </button>
                       <button onClick={async () => {
                         setSavingPost(true)
-                        await fetch(`/api/posts/${editingPost.slug}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            title: editingPost.title,
-                            excerpt: editingPost.excerpt,
-                            content: editingPost.content,
-                            category: editingPost.category,
+                        try {
+                          await adminFetch(`/api/posts/${editingPost.slug}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              title: editingPost.title,
+                              excerpt: editingPost.excerpt,
+                              content: editingPost.content,
+                              category: editingPost.category,
+                            })
                           })
-                        })
-                        setPosts(prev => prev.map(p => p.slug === editingPost.slug ? editingPost : p))
-                        setEditingPost(null)
-                        setSavingPost(false)
+                          setPosts(prev => prev.map(p => p.slug === editingPost.slug ? editingPost : p))
+                          setEditingPost(null)
+                        } catch (e) {
+                          window.alert(friendlyError(e))
+                        } finally {
+                          setSavingPost(false)
+                        }
                       }} disabled={savingPost}
                         className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-500 transition-all disabled:opacity-50">
                         {savingPost ? 'Salvando...' : 'Salvar alteracoes'}
@@ -769,8 +845,10 @@ export default function AdminPage() {
                         </button>
                         <button onClick={async () => {
                           if (!confirm('Apagar este post?')) return
-                          await fetch(`/api/posts/${post.slug}`, { method: 'DELETE' })
-                          setPosts(prev => prev.filter(p => p.slug !== post.slug))
+                          try {
+                            await adminFetch(`/api/posts/${post.slug}`, { method: 'DELETE' })
+                            setPosts(prev => prev.filter(p => p.slug !== post.slug))
+                          } catch (e) { window.alert(friendlyError(e)) }
                         }} className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-xs hover:bg-red-500/20 transition-all">
                           Apagar
                         </button>
@@ -934,22 +1012,26 @@ export default function AdminPage() {
                     {p.status === 'pending' && (
                       <div className="flex gap-3">
                         <button onClick={async () => {
-                          await fetch(`/api/research/${p.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'approved' })
-                          })
-                          setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'approved'} : prop))
+                          try {
+                            await adminFetch(`/api/research/${p.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: 'approved' })
+                            })
+                            setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'approved'} : prop))
+                          } catch (e) { window.alert(friendlyError(e)) }
                         }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-600/30 transition-all">
                           <CheckCircle className="w-4 h-4" /> Aprovar
                         </button>
                         <button onClick={async () => {
-                          await fetch(`/api/research/${p.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'rejected' })
-                          })
-                          setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'rejected'} : prop))
+                          try {
+                            await adminFetch(`/api/research/${p.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: 'rejected' })
+                            })
+                            setProposals(prev => prev.map(prop => prop.id === p.id ? {...prop, status: 'rejected'} : prop))
+                          } catch (e) { window.alert(friendlyError(e)) }
                         }} className="flex items-center gap-2 px-4 py-2 bg-red-600/20 border border-red-500/40 text-red-400 rounded-xl text-sm font-semibold hover:bg-red-600/30 transition-all">
                           <XCircle className="w-4 h-4" /> Rejeitar
                         </button>

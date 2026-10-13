@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import { requireFounder } from "@/lib/adminAuth"
 
 export async function GET(_: NextRequest, { params }: { params: { slug: string } }) {
   const sql = neon(process.env.DATABASE_URL!)
@@ -10,6 +11,8 @@ export async function GET(_: NextRequest, { params }: { params: { slug: string }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { slug: string } }) {
+  const admin = await requireFounder(req)
+  if (!admin) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   const sql = neon(process.env.DATABASE_URL!)
   const body = await req.json()
   const rows = await sql`
@@ -19,7 +22,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   return NextResponse.json(rows[0])
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { slug: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { slug: string } }) {
+  const admin = await requireFounder(req)
+  if (!admin) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   const sql = neon(process.env.DATABASE_URL!)
   await sql`DELETE FROM posts WHERE slug = ${params.slug}`
   return NextResponse.json({ success: true })
