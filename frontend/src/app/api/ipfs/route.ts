@@ -1,11 +1,14 @@
 export const maxDuration = 60
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireFounder } from '@/lib/adminAuth'
 
 const PINATA_JWT = process.env.PINATA_JWT
 
 // POST /api/ipfs — faz upload de imagem e metadados para o IPFS via Pinata
 export async function POST(req: NextRequest) {
+  const admin = await requireFounder(req)
+  if (!admin) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   try {
     const body = await req.json()
     const { imageBase64, metadata } = body

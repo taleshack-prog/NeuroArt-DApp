@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import { requireFounder } from "@/lib/adminAuth"
 
 export async function GET() {
   const sql = neon(process.env.DATABASE_URL!)
@@ -8,6 +9,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const admin = await requireFounder(req)
+  if (!admin) return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   const sql = neon(process.env.DATABASE_URL!)
   const body = await req.json()
   const slug = body.title.toLowerCase()
