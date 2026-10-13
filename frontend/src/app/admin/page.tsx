@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WalletButton } from '@/components/WalletButton'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
+import { useAccount, useWriteContract, useBalance, useChainId, usePublicClient, useSwitchChain } from 'wagmi'
+import { base } from 'wagmi/chains'
 import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader, Users, LayoutDashboard, Gift, DollarSign, Wallet, PenLine, Trash2, Microscope, Activity, RefreshCw, AlertTriangle, Wifi } from 'lucide-react'
 import Link from 'next/link'
-import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
+import { isFounder } from '@/lib/constants'
+import { tokenizeAndList, getVaultV2, suggestSymbol, validSymbol } from '@/lib/tokenizeV2'
+import { friendlyError } from '@/lib/marketplaceV2'
 import type { ArtworkSubmission } from '@/types'
 import { PriceManagerV2 } from '@/components/admin/PriceManagerV2'
 
@@ -87,13 +90,13 @@ function SubmissionCard({ art, onApprove, onReject, onTokenize, tokenizing }: {
             disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 rounded-xl text-sm font-semibold hover:bg-indigo-600/30 transition-all disabled:opacity-50">
             {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            {isLoading ? 'Enviando para IPFS...' : 'Tokenizar na Base Sepolia'}
+            {isLoading ? 'Processando…' : 'Tokenizar e listar (Base)'}
           </motion.button>
         )}
-        {art.status === 'tokenized' && art.txHash && (
-          <a href={`https://sepolia.basescan.org/tx/${art.txHash}`} target="_blank" rel="noopener noreferrer"
+        {art.status === 'tokenized' && /^0x[0-9a-fA-F]{40}$/.test(art.vaultAddress ?? '') && (
+          <a href={`https://basescan.org/token/${art.vaultAddress}`} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 rounded-xl text-sm hover:border-indigo-500 transition-all">
-            <Eye className="w-4 h-4" /> Ver no BaseScan
+            <Eye className="w-4 h-4" /> Ver token no BaseScan
           </a>
         )}
       </div>
@@ -150,11 +153,14 @@ export default function AdminPage() {
     return () => clearInterval(id)
   }, [activeTab])
 
-  const { writeContract, data: txHash } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
+  const chainId = useChainId()
+  const { switchChainAsync } = useSwitchChain()
+  const baseClient = usePublicClient({ chainId: base.id })
+  const [syncing, setSyncing] = useState(false)
   const { data: ethBalance } = useBalance({ address: DAPP_WALLET })
   const { data: usdcBalance } = useBalance({ address: DAPP_WALLET, token: USDC_ADDRESS })
   const { data: neuroBalance } = useBalance({ address: DAPP_WALLET, token: NEURO_ADDRESS })
-  const { isSuccess } = useWaitForTransactionReceipt({ hash: txHash })
 
   const founderAccess = mounted && isConnected && address && isFounder(address)
 
@@ -172,21 +178,6 @@ export default function AdminPage() {
       .then(data => setProposals(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (isSuccess && tokenizing) {
-      setSubmissions(prev => prev.map(s =>
-        s.id === tokenizing ? { ...s, status: 'tokenized', txHash } : s
-      ))
-      fetch(`/api/submissions/${tokenizing}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'tokenized', txHash }),
-      })
-      setTokenizing(null)
-      setUploadStatus('')
-    }
-  }, [isSuccess, tokenizing, txHash])
 
   const filtered = filter === 'all' ? submissions : submissions.filter(s => s.status === filter)
   const counts = {
@@ -219,65 +210,123 @@ export default function AdminPage() {
     })
   }
 
-  async function handleTokenize(art: ArtworkSubmission) {
-    setTokenizing(art.id)
-    setUploadStatus('Enviando imagem para IPFS...')
-    try {
-      const ipfsRes = await fetch('/api/ipfs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: art.imageUrl,
-          metadata: {
-            name: art.title,
-            description: art.description,
-            estadoCognitivo: art.estadoCognitivo,
-            artistName: art.artistName,
-            artistWallet: art.artistWallet,
-            totalFractions: art.totalFractions,
-            valorObra: art.valorObra || '0',
-            moeda: art.moeda || 'BRL',
-            precoPorFracao: art.precoPorFracao || '',
-            obraId: art.id,
-          },
-        }),
-      })
+  /** Grava campos da obra no banco e na tela; lança erro se a API falhar */
+  async function patchSubmission(id: string, fields: Partial<ArtworkSubmission>) {
+    const res = await fetch(`/api/submissions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (!res.ok) throw new Error(`Falha ao gravar no banco (HTTP ${res.status})`)
+    setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s))
+  }
 
-      const ipfsData = await ipfsRes.json()
-      if (!ipfsRes.ok) {
-        console.error('IPFS error:', ipfsData.error)
-        setUploadStatus('Erro no IPFS: ' + ipfsData.error)
-        setTokenizing(null)
-        return
+  /**
+   * Tokeniza e lista a obra nos contratos v2 (Base Mainnet): cria o cofre, autoriza e lista
+   * pela cotação do dia. Só marca "tokenized" depois que a listagem foi confirmada na rede.
+   */
+  async function handleTokenize(art: ArtworkSubmission) {
+    if (!baseClient || !address || tokenizing) return
+    setTokenizing(art.id)
+    try {
+      if (chainId !== base.id) {
+        setUploadStatus('Trocando para a rede Base…')
+        await switchChainAsync({ chainId: base.id })
       }
 
-      setUploadStatus('IPFS OK! Abrindo MetaMask...')
+      const existing = await getVaultV2(baseClient, art.id)
+      const hasVault = existing !== '0x0000000000000000000000000000000000000000'
 
-      await fetch(`/api/submissions/${art.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ipfsCid: ipfsData.metadataCid, imageUrl: ipfsData.imageUrl }),
+      let symbol = ''
+      if (!hasVault) {
+        const typed = window.prompt(
+          `Símbolo do token de "${art.title}" (maiúsculas, ex.: NA-OLV).\nNão dá para mudar depois.`,
+          suggestSymbol(art.title),
+        )
+        if (typed === null) { setTokenizing(null); return }
+        symbol = typed.trim().toUpperCase()
+        if (!validSymbol(symbol)) throw new Error('Símbolo inválido. Use de 2 a 11 caracteres: letras maiúsculas, números ou hífen.')
+      }
+
+      if (!window.confirm(
+        `Tokenizar e listar "${art.title}" na Base Mainnet?\n\n` +
+        `${hasVault ? 'O cofre já existe; ' : '1) cria o cofre com ' + art.totalFractions + ' frações; '}` +
+        `${hasVault ? '' : '2) '}autoriza o marketplace; ${hasVault ? '' : '3) '}lista pela cotação de hoje.\n` +
+        `Você vai assinar até 3 transações na MetaMask.`,
+      )) { setTokenizing(null); return }
+
+      let ipfsHash = art.ipfsCid ?? ''
+      if (!hasVault && !ipfsHash) {
+        setUploadStatus('Enviando imagem e metadados para o IPFS…')
+        const ipfsRes = await fetch('/api/ipfs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: art.imageUrl,
+            metadata: {
+              name: art.title,
+              description: art.description,
+              estadoCognitivo: art.estadoCognitivo,
+              artistName: art.artistName,
+              artistWallet: art.artistWallet,
+              totalFractions: art.totalFractions,
+              valorObra: art.valorObra || '0',
+              moeda: art.moeda || 'BRL',
+              precoPorFracao: art.precoPorFracao || '',
+              obraId: art.id,
+            },
+          }),
+        })
+        const ipfsData = await ipfsRes.json()
+        if (!ipfsRes.ok) throw new Error('Erro no IPFS: ' + ipfsData.error)
+        await patchSubmission(art.id, { ipfsCid: ipfsData.metadataCid, imageUrl: ipfsData.imageUrl })
+        ipfsHash = ipfsData.ipfsHash ?? ipfsData.metadataCid
+      }
+
+      await tokenizeAndList({
+        client: baseClient,
+        write: writeContractAsync,
+        account: address,
+        obra: art,
+        ipfsHash,
+        symbol,
+        onStep: setUploadStatus,
+        onVault: (vault, txHash) => patchSubmission(art.id, txHash ? { vaultAddress: vault, txHash } : { vaultAddress: vault }),
       })
-
-      setSubmissions(prev => prev.map(s =>
-        s.id === art.id ? { ...s, ipfsCid: ipfsData.metadataCid, imageUrl: ipfsData.imageUrl } : s
-      ))
-
-      writeContract({
-        address: CONTRACTS.VAULT_FACTORY,
-        abi: FACTORY_ABI,
-        functionName: 'createVault',
-        args: [
-          BigInt(art.id),
-          ipfsData.ipfsHash,
-          art.artistWallet as `0x${string}`,
-          BigInt(art.totalFractions),
-        ],
-      })
+      await patchSubmission(art.id, { status: 'tokenized' })
+      setUploadStatus('')
+      window.alert(`"${art.title}" tokenizada e listada. Ela já aparece à venda na galeria.`)
     } catch (e) {
       console.error(e)
-      setUploadStatus('Erro: ' + String(e))
+      setUploadStatus('')
+      window.alert(`Tokenização interrompida: ${friendlyError(e)}\n\nO que já foi feito na rede está salvo; clicar de novo continua do ponto em que parou.`)
+    } finally {
       setTokenizing(null)
+    }
+  }
+
+  /** Copia do contrato para o banco o endereço do cofre v2 de cada obra (não envia transação) */
+  async function handleSyncVaults() {
+    if (!baseClient || syncing) return
+    setSyncing(true)
+    let updated = 0
+    const errors: string[] = []
+    try {
+      for (const s of submissions) {
+        if (!/^\d+$/.test(s.id)) continue
+        try {
+          const vault = await getVaultV2(baseClient, s.id)
+          if (vault === '0x0000000000000000000000000000000000000000') continue
+          if ((s.vaultAddress ?? '').toLowerCase() === vault.toLowerCase()) continue
+          await patchSubmission(s.id, { vaultAddress: vault })
+          updated++
+        } catch (e) {
+          errors.push(`${s.title}: ${friendlyError(e)}`)
+        }
+      }
+      window.alert(`${updated} obra(s) atualizada(s) no banco.${errors.length ? '\n\nErros:\n' + errors.join('\n') : ''}`)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -408,6 +457,15 @@ export default function AdminPage() {
 
             {activeTab === 'obras' && (
               <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 rounded-2xl px-5 py-4">
+                  <p className="text-slate-400 text-sm max-w-2xl">
+                    Copia do contrato para o banco o endereço do cofre (token) de cada obra. Só lê a blockchain; não pede assinatura.
+                  </p>
+                  <button type="button" onClick={handleSyncVaults} disabled={syncing}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-sm font-semibold hover:border-indigo-500 transition-all disabled:opacity-50">
+                    <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> {syncing ? 'Sincronizando…' : 'Sincronizar cofres v2'}
+                  </button>
+                </div>
                 {filtered.length === 0 && (
                   <div className="text-center py-16 text-slate-600">Nenhuma submissão nesta categoria.</div>
                 )}
