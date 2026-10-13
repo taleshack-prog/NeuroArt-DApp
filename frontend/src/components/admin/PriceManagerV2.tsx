@@ -40,6 +40,8 @@ const MARKETPLACE_ABI = [
     type: 'function', name: 'setPrice', stateMutability: 'nonpayable',
     inputs: [{ name: 'obraId', type: 'uint256' }, { name: 'priceUsd6', type: 'uint256' }], outputs: [],
   },
+  { type: 'function', name: 'pause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'unpause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
 ] as const
 
 type Submission = { id: string; title: string; totalFractions: number; valorObra: string | number; moeda: string }
@@ -152,6 +154,39 @@ export function PriceManagerV2() {
 
   const wrongChain = isConnected && chainId !== base.id
   const canSend = isConnected && !wrongChain && isFounderOnChain === true && !!fx && !busy
+  const canToggle = isConnected && !wrongChain && isFounderOnChain === true && paused !== null && !busy
+
+  /** Pausa (bloqueia todas as compras) ou reabre as vendas. Exige FOUNDER_ROLE. */
+  async function togglePause() {
+    if (!client || paused === null) return
+    const want = !paused
+    const ok = window.confirm(want
+      ? 'Pausar as vendas? Ninguém conseguirá comprar frações até você reabrir. Obras, preços e frações já vendidas não mudam.'
+      : 'Reabrir as vendas? As compras voltam a funcionar para todos imediatamente.')
+    if (!ok) return
+    setBusy('pause')
+    setMsg({ kind: 'ok', text: `Confirme na MetaMask: ${want ? 'pausar' : 'reabrir'} as vendas` })
+    try {
+      const hash = await writeContractAsync({
+        address: MARKETPLACE_V2, abi: MARKETPLACE_ABI, functionName: want ? 'pause' : 'unpause', chainId: base.id,
+      })
+      setMsg({ kind: 'ok', text: 'Aguardando confirmação na rede…' })
+      const rc = await client.waitForTransactionReceipt({ hash })
+      if (rc.status !== 'success') throw new Error('a transação foi revertida')
+      // O RPC público pode responder com um nó atrasado: relê até refletir o novo estado
+      let current = !want
+      for (let i = 0; i < 10 && current !== want; i++) {
+        if (i) await new Promise(r => setTimeout(r, 2000))
+        current = await client.readContract({ address: MARKETPLACE_V2, abi: MARKETPLACE_ABI, functionName: 'paused' })
+      }
+      setPaused(want)
+      setMsg({ kind: 'ok', text: want ? 'Vendas pausadas.' : 'Vendas reabertas.' })
+    } catch (e: any) {
+      setMsg({ kind: 'erro', text: `Pausa: ${e?.shortMessage ?? e?.message ?? e}` })
+    } finally {
+      setBusy(null)
+    }
+  }
 
   async function update(row: Row, skipConfirm = false): Promise<boolean> {
     if (!fx || !client) return false
@@ -238,6 +273,10 @@ export function PriceManagerV2() {
           <p className={`text-xl font-bold ${paused ? 'text-amber-300' : 'text-emerald-300'}`}>
             {paused === null ? '…' : paused ? 'Pausado' : 'Aberto'}
           </p>
+          <button type="button" onClick={togglePause} disabled={!canToggle}
+            className={`${btn} my-2 w-full ${paused ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'} text-white`}>
+            {busy === 'pause' ? 'Aguardando…' : paused ? 'Reabrir vendas' : 'Pausar vendas'}
+          </button>
           <a href={`https://basescan.org/address/${MARKETPLACE_V2}`} target="_blank" rel="noopener noreferrer"
             className="text-xs text-indigo-300 hover:underline">
             Ver no BaseScan<span className="sr-only"> (abre em nova aba)</span>
