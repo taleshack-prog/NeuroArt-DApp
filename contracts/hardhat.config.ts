@@ -4,8 +4,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000000000000000000000000001";
-const BASE_SEPOLIA_RPC = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
+// Sem PRIVATE_KEY no .env, as redes reais ficam SEM conta: nunca assina com uma chave padrão por engano
+const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -20,15 +20,22 @@ const config: HardhatUserConfig = {
   },
   networks: {
     baseSepolia: {
-      url: BASE_SEPOLIA_RPC,
-      accounts: [PRIVATE_KEY],
+      url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
+      accounts,
       chainId: 84532,
     },
     base: {
-      url: "https://mainnet.base.org",
-      accounts: [PRIVATE_KEY],
+      url: process.env.BASE_RPC_URL || "https://mainnet.base.org",
+      accounts,
       chainId: 8453,
     },
+  },
+  // Etherscan API V2: uma única chave vale para a Base (8453) e as demais redes
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
+  },
+  sourcify: {
+    enabled: false,
   },
 };
 

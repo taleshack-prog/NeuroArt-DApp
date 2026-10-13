@@ -8,6 +8,7 @@ import { Brain, ArrowLeft, Shield, CheckCircle, XCircle, Clock, Zap, Eye, Loader
 import Link from 'next/link'
 import { isFounder, CONTRACTS, FACTORY_ABI } from '@/lib/constants'
 import type { ArtworkSubmission } from '@/types'
+import { PriceManagerV2 } from '@/components/admin/PriceManagerV2'
 
 const statusConfig = {
   pending:   { label: 'Pendente',   color: 'text-amber-400',   bg: 'bg-amber-500/10  border-amber-500/30',   icon: <Clock className="w-4 h-4" /> },
@@ -107,7 +108,7 @@ export default function AdminPage() {
 
   const [submissions, setSubmissions] = useState<ArtworkSubmission[]>([])
   const [filter, setFilter] = useState<'all' | ArtworkSubmission['status']>('all')
-  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog' | 'pesquisas' | 'health'>('obras')
+  const [activeTab, setActiveTab] = useState<'obras' | 'artistas' | 'airdrop' | 'financeiro' | 'blog' | 'pesquisas' | 'health' | 'precos'>('obras')
   const DAPP_WALLET = '0xE9eFC721405e1026B1ee91C07B2534e1796632A4' as `0x${string}`
   const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`
   const NEURO_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0') as `0x${string}`
@@ -335,6 +336,7 @@ export default function AdminPage() {
                 { id: 'blog', label: 'Blog', icon: <PenLine className="w-4 h-4" /> },
                 { id: 'pesquisas', label: 'Pesquisas', icon: <Microscope className="w-4 h-4" /> },
                 { id: 'health',   label: 'Health',    icon: <Activity className="w-4 h-4" /> },
+                { id: 'precos', label: 'Preços v2', icon: <DollarSign className="w-4 h-4" /> },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
@@ -720,6 +722,8 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'precos' && <PriceManagerV2 />}
 
             {activeTab === 'health' && (
               <div className="space-y-6">

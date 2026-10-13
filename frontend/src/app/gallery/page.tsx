@@ -6,9 +6,10 @@ import { useAccount, useBalance } from 'wagmi'
 import { Brain, ArrowLeft, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { getUSDtoBRL, getETHPrice, calcPrices } from '@/lib/exchange'
 import type { ArtworkSubmission } from '@/types'
 import { BuyButton } from '@/components/BuyButton'
+import { useListingV2 } from '@/hooks/useListingV2'
+import { BASESCAN, fmtEth, fmtUsdc } from '@/lib/marketplaceV2'
 
 const NEURO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_NEURO_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`
 
@@ -21,12 +22,15 @@ function soldPercent(sold: number | undefined, total: number | undefined) {
   return Number.isFinite(pct) ? Math.min(100, Math.max(0, Math.round(pct))) : 0
 }
 
-function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: number, ethUSD: number }) {
+function ArtCard({ art }: { art: ArtworkSubmission }) {
   const isTokenized = art.status === 'tokenized'
+  // Estado de venda lido do FractionMarketplaceV2 (preço, frações disponíveis, pausa)
+  const listing = useListingV2(art.id)
+  const onChain = listing.active
   const moedaSymbol = art.moeda === 'BRL' ? 'R$' : art.moeda === 'USD' ? 'US$' : 'ETH'
   const titleId = `obra-${art.id}-titulo`
-  // TODO: /api/submissions ainda não expõe frações vendidas — barra fica em 0% até existir o campo
-  const sold = soldPercent(undefined, art.totalFractions)
+  const total = Number(art.totalFractions)
+  const sold = onChain ? soldPercent(total - listing.available, total) : 0
   const available = 100 - sold
 
   return (
@@ -59,7 +63,7 @@ function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: numb
           )}
         </div>
         <div className="absolute top-3 right-3">
-          {isTokenized && (
+          {onChain && (
             <span className="px-2 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold">
               On-chain
             </span>
@@ -75,7 +79,11 @@ function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: numb
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-slate-400">
             <span>Frações disponíveis</span>
-            <span className="text-indigo-300 font-semibold">{available}%</span>
+            <span className="text-indigo-300 font-semibold">
+              {onChain
+                ? <>{listing.available.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ({available}%)</>
+                : '—'}
+            </span>
           </div>
           <div
             role="progressbar"
@@ -101,35 +109,28 @@ function ArtCard({ art, usdBRL, ethUSD }: { art: ArtworkSubmission, usdBRL: numb
             <div className="text-emerald-400 font-bold">
               {moedaSymbol} {Number(art.valorObra || 0).toLocaleString('pt-BR')}
             </div>
-            {art.valorObra && art.totalFractions && (() => {
-              const p = calcPrices(Number(art.valorObra), art.totalFractions, usdBRL, ethUSD)
-              return (
-                <div className="mt-1 space-y-0.5">
-                  <div className="text-blue-300 text-xs font-semibold">{p.fracaoUSDC} USDC / fração</div>
-                  <div className="text-slate-400 text-xs">{p.fracaoETH} ETH / fração</div>
-                </div>
-              )
-            })()}
+            {listing.priceUsd6 !== undefined && (
+              <div className="mt-1 space-y-0.5">
+                <div className="text-blue-300 text-xs font-semibold">{fmtUsdc(listing.priceUsd6)} USDC / fração</div>
+                {listing.ethPerFraction !== undefined && (
+                  <div className="text-slate-400 text-xs">≈ {fmtEth(listing.ethPerFraction)} ETH / fração</div>
+                )}
+              </div>
+            )}
           </div>
           {isTokenized ? (
-            <BuyButton
-              obraId={art.id}
-              obraTitle={art.title}
-              totalFractions={art.totalFractions || 100}
-              priceUSDC={11.21}
-              priceETH={0.003}
-            />
+            <BuyButton obraId={art.id} obraTitle={art.title} listing={listing} />
           ) : (
             <span className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl text-xs">
               Em aprovação
             </span>
           )}
         </div>
-        {art.vaultAddress && (
-          <a href={`https://sepolia.basescan.org/address/${art.vaultAddress}`}
+        {listing.vault && (
+          <a href={`${BASESCAN}/token/${listing.vault}`}
             target="_blank" rel="noopener noreferrer"
             className={`block text-xs text-slate-400 hover:text-indigo-300 transition-colors font-mono truncate rounded ${FOCUS}`}>
-            Vault: {art.vaultAddress}<span className="sr-only"> (abre em nova aba)</span>
+            Token das frações: {listing.vault}<span className="sr-only"> (abre em nova aba)</span>
           </a>
         )}
       </div>
@@ -143,14 +144,6 @@ export default function GalleryPage() {
   const [artworks, setArtworks] = useState<ArtworkSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'tokenized'>('all')
-  const [usdBRL, setUsdBRL] = useState(5.75)
-  const [ethUSD, setEthUSD] = useState(2300)
-
-  useEffect(() => {
-    getUSDtoBRL().then(setUsdBRL)
-    getETHPrice().then(setEthUSD)
-  }, [])
-
   useEffect(() => {
     fetch('/api/submissions')
       .then(r => r.json())
@@ -229,7 +222,7 @@ export default function GalleryPage() {
             initial="hidden" animate="show"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {filtered.map(art => <ArtCard key={art.id} art={art} usdBRL={usdBRL} ethUSD={ethUSD} />)}
+            {filtered.map(art => <ArtCard key={art.id} art={art} />)}
           </motion.div>
         </main>
         <footer className="border-t border-slate-800 mt-20 py-8 px-4 text-center text-slate-400 text-sm">
