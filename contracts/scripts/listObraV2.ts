@@ -23,6 +23,17 @@ import * as path from "path";
 const SUBMISSIONS_URL = process.env.SUBMISSIONS_URL ?? "https://neuro-art-d-app.vercel.app/api/submissions";
 const MAX_DIVERGENCE = 0.01; // 1%
 
+/** RPC público da Base é balanceado entre nós: um nó pode ainda não ter o bloco recém-minerado.
+ *  Repete a leitura até o estado esperado aparecer (até ~20 s). */
+async function waitFor<T>(fn: () => Promise<T>, ok: (v: T) => boolean, tries = 10): Promise<T> {
+  let last: any;
+  for (let i = 0; i < tries; i++) {
+    try { const v = await fn(); if (ok(v)) return v; last = v; } catch (e) { last = e; }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error(`O RPC não confirmou o estado após ${tries} tentativas (${last?.shortMessage ?? last?.message ?? last}). A transação pode ter sido feita: rode o mesmo comando de novo.`);
+}
+
 type Submission = {
   id: string; title: string; artistWallet: string; totalFractions: number;
   ipfsCid: string | null; valorObra: string | number; moeda: string; status: string;
@@ -110,7 +121,7 @@ async function main() {
       obraId, name, symbol, ipfsHash: obra.ipfsCid ?? "", artist: obra.artistWallet, fractions, recipient: signer.address,
     });
     const rc = await tx.wait();
-    vaultAddr = await factory.getVault(obraId, { blockTag: rc!.blockNumber });
+    vaultAddr = await waitFor(() => factory.getVault(obraId), (v: string) => v !== ethers.ZeroAddress);
     console.log(`1/3 Vault criado: ${vaultAddr}  (tx ${rc!.hash})`);
   }
 
@@ -136,8 +147,8 @@ async function main() {
   console.log(`2/3 Approve ok (tx ${rcA!.hash})`);
 
   const rcL = await (await mp.listObra(obraId, vaultAddr, obra.artistWallet, price, amount)).wait();
-  const after = await mp.getListing(obraId, { blockTag: rcL!.blockNumber });
-  const avail = await mp.available(obraId, { blockTag: rcL!.blockNumber });
+  const after = await waitFor(() => mp.getListing(obraId), (l: any) => l.active === true);
+  const avail = await waitFor(() => mp.available(obraId), (a: bigint) => a > 0n);
   console.log(`3/3 Listada (tx ${rcL!.hash}) — ativa: ${after.active}, frações no marketplace: ${ethers.formatEther(avail)}`);
 }
 
